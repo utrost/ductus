@@ -1,66 +1,83 @@
-Duktus
+# Ductus
 
-Ein Kalligraphie-Trainer für Android-Handys mit Stift. Er bewertet nicht, ob das Ergebnis aussieht wie die Vorlage, sondern ob es so entstanden ist wie die Vorlage.
+Ductus is an offline, stylus-first calligraphy trainer. It does not ask whether the final drawing looks like a reference image. It asks whether the character was *written the same way*: stroke order, stroke direction, pressure modulation, rhythm, and path form.
 
-Duktus ist der paläographische Fachbegriff für genau das: die Art und Weise der Strichführung — Reihenfolge, Richtung, Druck, Rhythmus. Ein Buchstabe kann täuschend echt aussehen und trotzdem falsch geschrieben sein.
+The first implementation is a **static web/PWA prototype** in the same spirit as Tracer: no backend, no dependencies, no account, no network services. It runs locally from `index.html` and can be installed as a PWA when served over HTTPS or `localhost`.
 
-Die Idee
+## Current status
 
-Übliche Schreib-Apps vergleichen Pixel: Du malst, sie überlagern deine Zeichnung mit der Vorlage und rechnen die Überdeckung aus. Damit bekommt man für ein langsam nachgemaltes, in falscher Reihenfolge zusammengestückeltes Zeichen 95 %. Das ist nutzlos — Kalligraphie ist eine Bewegung, kein Bild.
+Implemented now:
 
-Duktus bewertet fünf voneinander unabhängige Dimensionen:
+- Single-page web app in `index.html`
+- PWA manifest, service worker, and install icons
+- Mobile-responsive layout
+- Built-in Kurrent `n` sample reference
+- Stylus/mouse stroke capture with pressure
+- Reference JSON load/save
+- Attempt JSON export
+- Author mode: adopt current attempt as a new reference
+- Practice mode: score attempt against reference
+- Five independent scoring dimensions:
+  - form
+  - order
+  - direction
+  - pressure
+  - rhythm
+- Dependency-free Node regression tests
+- GitHub Actions CI and Pages deployment workflow
 
-Dimension	Frage	Metrik
-Form	Liegt der Pfad richtig?	DTW / diskrete Fréchet-Distanz
-Reihenfolge	Strich 3 nach Strich 2?	Sequenzvergleich
-Richtung	Von oben nach unten oder umgekehrt?	Tangentenvorzeichen
-Druck	Schwellen und Abschwellen an der richtigen Stelle?	Korrelation der Druckkurve über Bogenlänge
-Rhythmus	Zügig geschrieben oder gezittert?	Geschwindigkeitsprofil
+Still prototype / not yet done:
 
-Kein Gesamtscore. Fünf Balken, fünf Aussagen. Ein einziger Prozentwert sagt dir nicht, was du falsch machst — und genau das ist der einzige Grund, eine solche App zu benutzen.
+- Real Android hardware pressure calibration
+- Full Kurrent reference set
+- Robust authoring review UX
+- Long-term local progress tracking
+- Deep accessibility work for the drawing surface
 
-Schriften
+## Try it locally
 
-Die Engine ist schriftagnostisch. Eine Schrift ist reine Datei, kein Code.
+```sh
+npm test
+npm run serve
+```
 
-Kurrent / Sütterlin — der eigentliche Anlass. Eine tote Schrift, die viele Leute lesen lernen wollen (alte Briefe, Kirchenbücher), und die man am besten lesen lernt, indem man sie schreibt.
-Copperplate / Spencerian — der klassische Fall für Druckmodulation. Aufstrich dünn, Abstrich fett. Ohne Druckerfassung nicht trainierbar.
-Kanji / Kana — strenge Strichreihenfolge, gut belegt. Referenzdaten aus KanjiVG (CC BY-SA 3.0), liefert Pfade und Strichreihenfolge. Lizenz beachten.
+Then open:
 
-Kurrent und Copperplate haben keinen fertigen Datensatz. Die Referenzen werden in der App aufgenommen (siehe Autorenmodus).
+```text
+http://localhost:8000/
+```
 
-Scope
-In Scope (v0.1)
-Stift-Erfassung mit Druck; Finger-Input wird ignoriert
-Referenzformat als JSON, eine Datei pro Schrift
-Autorenmodus: Zeichen selbst einmal sauber schreiben → wird zur Referenz
-Übungsmodus: Vorlage als Geisterbild, live nachschreiben
-Bewertung über die fünf Dimensionen, jeweils mit konkretem Hinweis
-Wiedergabe: eigener Strich und Referenz als Animation nebeneinander
-Ein Schriftsatz vollständig: Kurrent, Kleinbuchstaben
-Nice to have (später)
-SVG-Export von Übungsblättern für den Stiftplotter. Linienraster, Geisterzeichen, Wiederholungszeilen — auf Papier geplottet. Ausgabe vpype-kompatibel: reine Pfade, keine Füllungen, keine Gruppen-Verschachtelung.
-Fortschrittsverlauf pro Zeichen
-Explizit nicht in Scope
-Konten, Cloud-Sync, Leaderboards, Streaks, Gamification jeder Art
-OCR / Handschrifterkennung
-Tablet-Layouts
-Nicht verhandelbar
-Offline. Keine INTERNET-Permission.
-Kein Analytics-SDK, kein Crash-Reporter, keine Play-Services.
-Fortschritt liegt in einer lokalen Datei, im Klartext, exportierbar.
-Architektur
-Stack
-Ebene	Wahl	Begründung
-Sprache	Kotlin	Direkter MotionEvent-Zugriff
-Rendering	Canvas + SurfaceView	Kein Game-Loop nötig, keine Engine
-Mathematik	eigener Code	DTW und Fréchet sind je ~50 Zeilen
-Min SDK	26	—
+You can also open `index.html` directly from disk, but service worker/PWA install behavior is browser-dependent for `file://` pages.
 
-Keine Physik-Engine, kein LibGDX. Das ist ein Zeichen-, kein Spiel-Projekt.
+## Usage
 
-Referenzformat
-jsonc
+1. Open Ductus.
+2. Draw the sample glyph with a stylus or mouse.
+3. Click **Score**.
+4. Read the five separate bars instead of a single total score.
+5. Use **Clear** or **Undo** and try again.
+6. Switch to **Author** mode to draw a new reference and click **Adopt attempt as reference**.
+7. Save the reference JSON for later reuse.
+
+## Why not one total score?
+
+A single score hides the useful information. A glyph can have good form but wrong stroke order. It can be written in the right place but backward. It can match the path while completely missing pressure modulation.
+
+Ductus therefore reports five independent dimensions:
+
+| Dimension | Question | Prototype metric |
+|---|---|---|
+| Form | Is the path in the right place? | DTW over arc-length-resampled points |
+| Order | Were strokes made in the reference order? | Stroke assignment vs drawn order |
+| Direction | Was each stroke drawn the right way? | Tangent dot product |
+| Pressure | Does pressure swell/fade in the right place? | Pearson correlation over resampled pressure |
+| Rhythm | Was the motion confident or hesitant? | Velocity variance heuristic |
+
+## Reference JSON
+
+A reference is a plain JSON file:
+
+```json
 {
   "script": "kurrent",
   "glyph": "n",
@@ -68,88 +85,73 @@ jsonc
   "strokes": [
     {
       "index": 0,
+      "hint": "Aufstrich dünn, erst im Abstrich Druck geben.",
       "points": [
-        // x, y, erwarteter Druck 0..1, relative Bogenlänge 0..1
-        { "x": 210, "y": 690, "p": 0.15, "t": 0.00 },
-        { "x": 260, "y": 480, "p": 0.30, "t": 0.22 },
-        { "x": 340, "y": 380, "p": 0.85, "t": 0.55 },
-        { "x": 400, "y": 690, "p": 0.90, "t": 1.00 }
-      ],
-      "hint": "Aufstrich dünn, erst im Abstrich Druck geben."
+        { "x": 200, "y": 700, "p": 0.2, "t": 0.0 },
+        { "x": 260, "y": 430, "p": 0.3, "t": 0.5 },
+        { "x": 430, "y": 700, "p": 0.85, "t": 1.0 }
+      ]
     }
   ]
 }
+```
 
-Punkte sind auf gleichmäßige Bogenlänge resampelt, nicht auf gleiche Zeit. Sonst vergleicht man Geschwindigkeiten statt Formen.
+Points are interpreted as normalized reference-space coordinates. The scorer resamples paths by arc length, not by time, so form and pressure can be compared independently from drawing speed.
 
-Bewertungs-Pipeline
-MotionEvent
-   │  getHistoricalX/Y/Pressure() auswerten — Android batcht Stift-Events!
-   │  Nur TOOL_TYPE_STYLUS.
-   ▼
-[1] Segmentierung
-   │  ACTION_UP trennt Striche. Jeder Strich einzeln.
-   ▼
-[2] Normalisierung
-   │  Auf das Referenz-Koordinatensystem skalieren (canvas.width/height).
-   │  Auf N Punkte gleicher Bogenlänge resamplen (N = 64).
-   │  Druck: gleitender Mittelwert, Fenster 5. Roh zittert zu stark.
-   ▼
-[3] Zuordnung
-   │  Welcher gezeichnete Strich gehört zu welchem Referenzstrich?
-   │  NICHT einfach der Reihe nach — sonst kann man Reihenfolgefehler
-   │  nicht von Formfehlern unterscheiden.
-   │  → Ungarische Methode über eine Kostenmatrix der Fréchet-Distanzen.
-   │  → Die daraus resultierende Permutation IST das Reihenfolge-Ergebnis.
-   ▼
-[4] Bewertung je Strich
-   │  Form      : DTW-Distanz, normiert auf Zeichenhöhe
-   │  Richtung  : Skalarprodukt der Tangenten an Anfang und Ende
-   │              (< 0 → Strich verkehrt herum gezogen)
-   │  Druck     : Pearson-Korrelation der Druckkurven über t
-   │  Rhythmus  : Varianz der Geschwindigkeit; hohe Varianz = gezittert
-   ▼
-[5] Aggregation
-   │  Fünf Werte, fünf Textbausteine. Der schlechteste Wert bestimmt,
-   │  welcher Hinweis prominent angezeigt wird.
+## Architecture
 
-Fallstricke:
+The prototype keeps the distribution small:
 
-Reihenfolge vs. Form nicht vermischen. Wer Strich 2 und 3 vertauscht, hat perfekte Form und falsche Reihenfolge. Das muss die App auseinanderhalten können, sonst ist das Feedback wertlos. Deshalb Schritt [3] als eigener Zuordnungsschritt.
-Druck ist gerätespezifisch. Manche Geräte liefern nur ~8 Stufen, manche liefern kontinuierliche Werte, manche geben konstant 1.0 zurück. Beim ersten Start kalibrieren (leicht / mittel / fest schreiben lassen) und die Skala darauf normieren. Ohne Kalibrierung ist die Druckdimension Rauschen.
-DTW ist O(n²). Bei N=64 pro Strich völlig unkritisch. Nicht optimieren.
-Spiegelverkehrte Striche haben oft eine gute Fréchet-Distanz. Deshalb ist Richtung eine eigene Dimension und kein Teil des Formscores.
-Modulstruktur
-app/
-  input/      StylusTracker, RawStroke, PressureCalibration
-  glyph/      GlyphSpec, ScriptLoader, GlyphAuthor   // Autorenmodus
-  scoring/    Resampler, Dtw, Frechet, StrokeMatcher, Scorer, Feedback
-  practice/   PracticeSession, GhostRenderer, ReplayRenderer
-  export/     PracticeSheetSvg                        // später, für den Plotter
-  ui/         PracticeActivity, ScriptPickerActivity, AuthorActivity
-scripts/      kurrent.json, copperplate.json, ...
-Vorgehen
+```text
+.
+├── index.html                 # App shell, CSS, UI, drawing, scorer
+├── manifest.webmanifest       # PWA metadata
+├── sw.js                      # Offline app-shell cache
+├── icons/                     # SVG + PNG install icons
+├── tests/ductus-core.test.cjs # Headless regression tests
+└── .github/workflows/         # CI and optional GitHub Pages deploy
+```
 
-Reihenfolge ist bewusst gewählt.
+Runtime subsystems:
 
-Stift-Spike. Leere Activity, Striche mit druckabhängiger Breite. Latenz messen, Druckauflösung des Geräts messen und protokollieren. Wenn das Gerät konstant pressure = 1.0 liefert, fällt eine der fünf Dimensionen weg — das muss man vor allem anderen wissen.
-Scoring headless. scoring/ komplett ohne UI, mit Unit-Tests gegen handgebaute Fixtures: identischer Strich, verkehrt herum, vertauschte Reihenfolge, verwackelt, druckinvertiert. Jeder Fall muss die richtige Dimension durchfallen lassen und die anderen nicht. Das ist der Kern des Projekts. Hier ist Gründlichkeit alles.
-Autorenmodus. Ohne Referenzdaten kein Training. Zeichen schreiben, ansehen, akzeptieren oder verwerfen, als JSON ablegen.
-Übungsmodus. Geisterbild, nachschreiben, fünf Balken, ein Hinweis.
-Ein Schriftsatz. Kurrent klein a–z, selbst aufgenommen.
-(optional) SVG-Übungsblätter für den Plotter.
+1. **Stroke capture** — pointer events; accepts pen and mouse, ignores touch.
+2. **Reference model** — script/glyph/canvas/strokes JSON.
+3. **Scoring core** — resampling, DTW, greedy stroke matching, direction, pressure, rhythm.
+4. **Canvas renderer** — reference ghost, baseline/x-height guide, attempt strokes.
+5. **PWA shell** — manifest, icons, service worker cache.
 
-Für Codex
-Schritte der Reihe nach. Nach jedem Schritt anhalten, ich teste auf echter Hardware. Ein Stift-Projekt ist im Emulator nicht beurteilbar.
-scoring/ ist reine Mathematik und muss vollständig headless getestet sein, bevor irgendeine UI entsteht. Fixtures zuerst, Implementierung danach.
-Kein Netzwerk, kein Firebase, keine Play-Services, kein Analytics. Harte Grenze.
-Abhängigkeiten minimal halten, jede neue vorher begründen. DTW und Fréchet bitte selbst schreiben, nicht per Library ziehen.
-Deutsche Kommentare gern, Bezeichner englisch.
-KanjiVG nur einbinden, wenn die CC-BY-SA-Attribution korrekt hinterlegt ist.
+## Non-negotiables from the original concept
 
-Fragen, die Code beantworten soll — nicht raten, messen:
+- Offline-first.
+- No accounts.
+- No analytics.
+- No cloud sync.
+- No network dependency for the app logic.
+- Local JSON files remain the source of truth.
 
-Wie viele Druckstufen liefert das Zielgerät tatsächlich?
-Wie hoch ist die Stift-Latenz?
-Reicht N=64 Resampling-Punkte, um Kurrent-Schleifen aufzulösen?
-Trennt die Ungarische Methode Reihenfolgefehler zuverlässig von Formfehlern, oder gibt es Zeichen, bei denen die Zuordnung mehrdeutig wird?
+## Relationship to the Android idea
+
+The original concept targeted Android/Kotlin for direct `MotionEvent` access. This web/PWA version is a faster prototype of the interaction model and scoring pipeline. It is useful for validating references, UI language, and scoring behavior before committing to a native Android build.
+
+The web prototype cannot answer every hardware question. Real device work is still needed for:
+
+- pressure range and pressure levels
+- stylus latency
+- browser pressure behavior on Android/iPad
+- whether rhythm scoring survives real sampling jitter
+
+## Development
+
+Run tests:
+
+```sh
+npm test
+```
+
+Serve locally:
+
+```sh
+npm run serve
+```
+
+The tests intentionally avoid external dependencies. They load the inline app script in a Node VM with a mocked DOM/canvas and verify PWA wiring plus scoring behavior.

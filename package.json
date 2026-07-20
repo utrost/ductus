@@ -1,0 +1,11 @@
+{
+  "name": "ductus",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline PWA prototype for scoring calligraphy ductus: form, order, direction, pressure, and rhythm.",
+  "scripts": {
+    "test": "node tests/ductus-core.test.cjs",
+    "serve": "python3 -m http.server 8000"
+  },
+  "license": "UNLICENSED"
+}
