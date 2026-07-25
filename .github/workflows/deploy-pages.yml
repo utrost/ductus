@@ -20,7 +20,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check whether GitHub Pages is enabled
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api repos/${{ github.repository }}/pages >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::GitHub Pages is not enabled for this repository; skipping deploy. Enable Pages in repository settings, then rerun this workflow."
+          fi
+
       - name: Prepare pages content
+        if: steps.pages.outputs.enabled == 'true'
         run: |
           mkdir -p _site
           cp index.html _site/index.html
@@ -28,9 +42,11 @@ jobs:
           cp sw.js _site/
           cp -R icons _site/
       - name: Upload artifact
+        if: steps.pages.outputs.enabled == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
       - name: Deploy to GitHub Pages
+        if: steps.pages.outputs.enabled == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
