@@ -1,40 +1,54 @@
 # Ductus
 
-Ductus is an offline, stylus-first calligraphy trainer. It does not ask whether the final drawing looks like a reference image. It asks whether the character was *written the same way*: stroke order, stroke direction, pressure modulation, rhythm, and path form.
+Ductus is an offline calligraphy trainer for practicing ductus: the movement behind a written form.
 
-The first implementation is a **static web/PWA prototype** in the same spirit as Tracer: no backend, no dependencies, no account, no network services. It runs locally from `index.html` and can be installed as a PWA when served over HTTPS or `localhost`.
+It does not try to decide whether the final drawing looks nice. It compares how a glyph was written: stroke order, stroke direction, path form, pressure change, and rhythm. That is the useful part if the goal is practice rather than image matching.
+
+The current version is a static web app and PWA. No backend. No account. No analytics. It can run from a local file for quick tests, or from GitHub Pages when installed as an app.
+
+- App: <https://utrost.github.io/ductus/>
+- Source: <https://github.com/utrost/ductus>
+- Roadmap: [docs/roadmap.md](docs/roadmap.md)
+- License: MIT
 
 ## Current status
 
+Ductus is a prototype. It is usable enough to test the idea, not finished enough to be trusted as a teacher.
+
 Implemented now:
 
-- Single-page web app in `index.html`
+- Single-page app in `index.html`
 - PWA manifest, service worker, and install icons
 - Mobile-responsive layout
-- Built-in Kurrent `n` sample reference
-- Stylus/mouse stroke capture with pressure
+- Built-in Kurrent `n` reference
+- Stylus and mouse stroke capture
+- Pressure capture where the browser/device exposes it
+- Practice mode with scoring
+- Author mode for turning an attempt into a reference
 - Reference JSON load/save
 - Attempt JSON export
-- Author mode: adopt current attempt as a new reference
-- Practice mode: score attempt against reference
-- Five independent scoring dimensions:
-  - form
-  - order
-  - direction
-  - pressure
-  - rhythm
+- Five scoring dimensions: form, order, direction, pressure, rhythm
 - Dependency-free Node regression tests
-- GitHub Actions CI and Pages deployment workflow
+- GitHub Actions CI
+- GitHub Pages deployment
 
-Still prototype / not yet done:
+Known limits:
 
-- Real Android hardware pressure calibration
-- Full Kurrent reference set
-- Robust authoring review UX
-- Long-term local progress tracking
-- Deep accessibility work for the drawing surface
+- Only one built-in reference glyph exists.
+- Pressure behavior depends on browser and hardware.
+- Authoring a good reference still needs judgement.
+- There is no local progress history yet.
+- Accessibility around the drawing surface needs work.
 
-## Try it locally
+## Try it
+
+Use the hosted app:
+
+```text
+https://utrost.github.io/ductus/
+```
+
+Or run it locally:
 
 ```sh
 npm test
@@ -47,31 +61,32 @@ Then open:
 http://localhost:8000/
 ```
 
-You can also open `index.html` directly from disk, but service worker/PWA install behavior is browser-dependent for `file://` pages.
+Opening `index.html` directly from disk works for quick experiments, but service worker and install behavior depend on the browser's `file://` rules.
 
-## Usage
+## Basic use
 
 1. Open Ductus.
 2. Draw the sample glyph with a stylus or mouse.
 3. Click **Score**.
-4. Read the five separate bars instead of a single total score.
+4. Read the five bars separately.
 5. Use **Clear** or **Undo** and try again.
-6. Switch to **Author** mode to draw a new reference and click **Adopt attempt as reference**.
-7. Save the reference JSON for later reuse.
+6. Switch to **Author** mode to draw a new reference.
+7. Click **Adopt attempt as reference**.
+8. Save the reference JSON if you want to keep it.
 
-## Why not one total score?
+The bars are deliberately separate. A stroke can have the right shape but the wrong direction. It can be in the right place but written in the wrong order. One total score would hide that.
 
-A single score hides the useful information. A glyph can have good form but wrong stroke order. It can be written in the right place but backward. It can match the path while completely missing pressure modulation.
+## Scoring model
 
-Ductus therefore reports five independent dimensions:
+Ductus scores five things:
 
-| Dimension | Question | Prototype metric |
-|---|---|---|
-| Form | Is the path in the right place? | DTW over arc-length-resampled points |
-| Order | Were strokes made in the reference order? | Stroke assignment vs drawn order |
-| Direction | Was each stroke drawn the right way? | Tangent dot product |
-| Pressure | Does pressure swell/fade in the right place? | Pearson correlation over resampled pressure |
-| Rhythm | Was the motion confident or hesitant? | Velocity variance heuristic |
+- **Form:** path placement, using DTW over arc-length-resampled points
+- **Order:** whether strokes appear in the same order as the reference
+- **Direction:** whether each stroke travels the same way
+- **Pressure:** correlation between reference pressure and attempt pressure
+- **Rhythm:** a rough velocity-variance heuristic
+
+The scoring is intentionally transparent. The prototype should help find useful feedback, not pretend to be an authority.
 
 ## Reference JSON
 
@@ -96,49 +111,20 @@ A reference is a plain JSON file:
 }
 ```
 
-Points are interpreted as normalized reference-space coordinates. The scorer resamples paths by arc length, not by time, so form and pressure can be compared independently from drawing speed.
+Coordinates are normalized to the reference canvas. The scorer resamples paths by arc length, not by raw event timing, so shape and pressure can be compared without making drawing speed the only signal.
 
-## Architecture
-
-The prototype keeps the distribution small:
+## Repository layout
 
 ```text
 .
-├── index.html                 # App shell, CSS, UI, drawing, scorer
+├── index.html                 # App shell, UI, drawing, scorer
 ├── manifest.webmanifest       # PWA metadata
 ├── sw.js                      # Offline app-shell cache
-├── icons/                     # SVG + PNG install icons
+├── icons/                     # SVG and PNG install icons
 ├── tests/ductus-core.test.cjs # Headless regression tests
-└── .github/workflows/         # CI and optional GitHub Pages deploy
+├── docs/roadmap.md            # Roadmap and open questions
+└── .github/workflows/         # CI, AI-prune, GitHub Pages deploy
 ```
-
-Runtime subsystems:
-
-1. **Stroke capture** — pointer events; accepts pen and mouse, ignores touch.
-2. **Reference model** — script/glyph/canvas/strokes JSON.
-3. **Scoring core** — resampling, DTW, greedy stroke matching, direction, pressure, rhythm.
-4. **Canvas renderer** — reference ghost, baseline/x-height guide, attempt strokes.
-5. **PWA shell** — manifest, icons, service worker cache.
-
-## Non-negotiables from the original concept
-
-- Offline-first.
-- No accounts.
-- No analytics.
-- No cloud sync.
-- No network dependency for the app logic.
-- Local JSON files remain the source of truth.
-
-## Relationship to the Android idea
-
-The original concept targeted Android/Kotlin for direct `MotionEvent` access. This web/PWA version is a faster prototype of the interaction model and scoring pipeline. It is useful for validating references, UI language, and scoring behavior before committing to a native Android build.
-
-The web prototype cannot answer every hardware question. Real device work is still needed for:
-
-- pressure range and pressure levels
-- stylus latency
-- browser pressure behavior on Android/iPad
-- whether rhythm scoring survives real sampling jitter
 
 ## Development
 
@@ -154,4 +140,26 @@ Serve locally:
 npm run serve
 ```
 
-The tests intentionally avoid external dependencies. They load the inline app script in a Node VM with a mocked DOM/canvas and verify PWA wiring plus scoring behavior.
+The tests intentionally avoid external dependencies. They load the inline app script in a Node VM with a mocked DOM/canvas and check the PWA wiring plus scoring behavior.
+
+## Deployment
+
+GitHub Pages is served from the static app shell. The deployment workflow copies these files into the Pages artifact:
+
+- `index.html`
+- `manifest.webmanifest`
+- `sw.js`
+- `icons/`
+
+The app uses relative paths so it can run under `/ductus/` on GitHub Pages.
+
+## Non-goals for now
+
+- Accounts
+- Cloud sync
+- Analytics
+- A global leaderboard
+- Automatic judgement of artistic quality
+- A large framework stack
+
+First the movement model has to be useful.
