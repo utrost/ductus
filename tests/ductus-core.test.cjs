@@ -7,6 +7,18 @@ assert.match(html, /<title>Ductus<\/title>/);
 assert.match(html, /<link\s+rel="manifest"\s+href="\.\/manifest\.webmanifest"/);
 assert.match(html, /navigator\.serviceWorker\.register\('\.\/sw\.js'\)/);
 assert.match(html, /@media\s*\(max-width:\s*720px\)/);
+assert.match(html, /id="scoreHelp"/);
+assert.match(html, /Form<\/b> checks path placement/);
+assert.match(html, /Order<\/b> checks whether strokes were made in the reference sequence/);
+assert.match(html, /docs\/manual-device-test-checklist\.md/);
+
+const checklist = fs.readFileSync(new URL('../docs/manual-device-test-checklist.md', `file://${__filename}`), 'utf8');
+assert.match(checklist, /# Manual device test checklist/);
+assert.match(checklist, /Android tablet \+ stylus/);
+assert.match(checklist, /iPad\/Safari/);
+assert.match(checklist, /Desktop drawing tablet/);
+assert.match(checklist, /pressure range/i);
+assert.match(checklist, /event sampling/i);
 
 const manifest = JSON.parse(fs.readFileSync(new URL('../manifest.webmanifest', `file://${__filename}`), 'utf8'));
 assert.equal(manifest.name, 'Ductus');
@@ -17,7 +29,7 @@ assert.ok(manifest.icons.some(icon => icon.src === './icons/icon-512.png'));
 const sw = fs.readFileSync(new URL('../sw.js', `file://${__filename}`), 'utf8');
 assert.match(sw, /PRECACHE_URLS/);
 assert.match(sw, /'\.\/index\.html'/);
-assert.match(sw, /event\.request\.mode\s*===\s*'navigate'/);
+assert.match(sw, /'\.\/docs\/manual-device-test-checklist\.md'/);
 
 const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
 assert.equal(scripts.length, 1);

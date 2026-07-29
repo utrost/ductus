@@ -24,9 +24,7 @@ Done:
 
 Remaining:
 
-- Add a short in-app explanation of each score
 - Add one or two small sample references beyond `n`
-- Add a manual browser/device test checklist
 
 Exit criterion:
 

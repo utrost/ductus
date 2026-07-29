@@ -42,6 +42,7 @@ jobs:
           cp index.html _site/index.html
           cp manifest.webmanifest _site/
           cp sw.js _site/
+          cp -R docs _site/
           cp -R icons _site/
       - name: Upload artifact
         if: steps.pages.outputs.enabled == 'true'

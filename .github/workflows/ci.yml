@@ -25,10 +25,12 @@ jobs:
           cp index.html _site/index.html
           cp manifest.webmanifest _site/
           cp sw.js _site/
+          cp -R docs _site/
           cp -R icons _site/
           test -f _site/index.html
           test -f _site/manifest.webmanifest
           test -f _site/sw.js
+          test -f _site/docs/manual-device-test-checklist.md
           test -f _site/icons/icon-192.svg
           test -f _site/icons/icon-192.png
           test -f _site/icons/icon-512.svg
