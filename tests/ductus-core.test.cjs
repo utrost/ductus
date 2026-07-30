@@ -8,9 +8,14 @@ assert.match(html, /<link\s+rel="manifest"\s+href="\.\/manifest\.webmanifest"/);
 assert.match(html, /navigator\.serviceWorker\.register\('\.\/sw\.js'\)/);
 assert.match(html, /@media\s*\(max-width:\s*720px\)/);
 assert.match(html, /id="scoreHelp"/);
+assert.match(html, /<details[^>]+id="scoreHelp"/);
+assert.match(html, /<summary>What the scores mean<\/summary>/);
 assert.match(html, /Form<\/b> checks path placement/);
 assert.match(html, /Order<\/b> checks whether strokes were made in the reference sequence/);
 assert.match(html, /docs\/manual-device-test-checklist\.md/);
+assert.match(html, /<details[^>]+id="referencePanel"/);
+assert.match(html, /<summary>Reference JSON<\/summary>/);
+assert.match(html, /@media\s*\(max-width:\s*720px\)[\s\S]*#referencePanel\s+textarea\s*\{\s*min-height:\s*72px/);
 
 const checklist = fs.readFileSync(new URL('../docs/manual-device-test-checklist.md', `file://${__filename}`), 'utf8');
 assert.match(checklist, /# Manual device test checklist/);
