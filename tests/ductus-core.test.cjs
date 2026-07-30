@@ -16,6 +16,10 @@ assert.match(html, /docs\/manual-device-test-checklist\.md/);
 assert.match(html, /<details[^>]+id="referencePanel"/);
 assert.match(html, /<summary>Reference JSON<\/summary>/);
 assert.match(html, /@media\s*\(max-width:\s*720px\)[\s\S]*#referencePanel\s+textarea\s*\{\s*min-height:\s*72px/);
+assert.match(html, /id="diagnostics"/);
+assert.match(html, /Pointer data/);
+assert.match(html, /attempt\.txt/);
+assert.match(html, /text\/plain/);
 
 const checklist = fs.readFileSync(new URL('../docs/manual-device-test-checklist.md', `file://${__filename}`), 'utf8');
 assert.match(checklist, /# Manual device test checklist/);
@@ -91,5 +95,20 @@ const invertedPressure = [JSON.parse(JSON.stringify(reference.strokes[0]))];
 invertedPressure[0].points = invertedPressure[0].points.map(p => ({ ...p, p: 1 - p.p }));
 const pressure = core.scoreAttempt({ ...reference, strokes: [reference.strokes[0]] }, invertedPressure);
 assert.ok(pressure.pressure.score < 70, 'inverted pressure should fail pressure');
+
+const diagnostics = core.diagnosticsFor(reference, same);
+assert.equal(diagnostics.strokeSummary, '2 attempt / 2 reference');
+assert.equal(diagnostics.pressureStatus, 'real');
+assert.ok(diagnostics.pointCount > 0);
+assert.ok(diagnostics.pressureMax > diagnostics.pressureMin);
+
+const oneStrokeDiagnostics = core.diagnosticsFor(reference, [same[0]]);
+assert.equal(oneStrokeDiagnostics.strokeSummary, '1 attempt / 2 reference');
+assert.ok(oneStrokeDiagnostics.warnings.some(w => w.includes('Reference expects 2 strokes')));
+
+const flatPressureStroke = [{ index: 0, points: reference.strokes[0].points.map(p => ({ ...p, p: 0.5 })) }];
+const flatDiagnostics = core.diagnosticsFor({ ...reference, strokes: [reference.strokes[0]] }, flatPressureStroke);
+assert.equal(flatDiagnostics.pressureStatus, 'flat');
+assert.ok(flatDiagnostics.warnings.some(w => w.includes('Pressure looks flat')));
 
 console.log('Ductus core regression tests passed');
