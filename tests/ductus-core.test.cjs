@@ -20,6 +20,14 @@ assert.match(html, /id="diagnostics"/);
 assert.match(html, /Pointer data/);
 assert.match(html, /attempt\.txt/);
 assert.match(html, /text\/plain/);
+assert.match(html, /id="metaHand"/);
+assert.match(html, /id="metaTool"/);
+assert.match(html, /id="metaNotes"/);
+assert.match(html, /value="warmup-hairline"/);
+assert.match(html, /value="warmup-downstroke"/);
+assert.match(html, /value="warmup-compound"/);
+assert.match(html, /drawReferenceMarkers/);
+assert.match(html, /Pressure confidence/);
 
 const checklist = fs.readFileSync(new URL('../docs/manual-device-test-checklist.md', `file://${__filename}`), 'utf8');
 assert.match(checklist, /# Manual device test checklist/);
@@ -121,5 +129,32 @@ const flatPressureStroke = [{ index: 0, points: reference.strokes[0].points.map(
 const flatDiagnostics = core.diagnosticsFor({ ...reference, strokes: [reference.strokes[0]] }, flatPressureStroke);
 assert.equal(flatDiagnostics.pressureStatus, 'flat');
 assert.ok(flatDiagnostics.warnings.some(w => w.includes('Pressure looks flat')));
+
+const edgeNoisy = [{ index: 0, points: [
+  { x: 0, y: 0, p: 0, t: 0 },
+  { x: 10, y: 0, p: 0.2, t: 1 },
+  { x: 20, y: 0, p: 0.8, t: 2 },
+  { x: 30, y: 0, p: 1, t: 3 }
+] }];
+const edgeClean = [{ index: 0, points: [
+  { x: 0, y: 0, p: 1, t: 0 },
+  { x: 10, y: 0, p: 0.2, t: 1 },
+  { x: 20, y: 0, p: 0.8, t: 2 },
+  { x: 30, y: 0, p: 0, t: 3 }
+] }];
+const trimmedPressure = core.scoreAttempt({ ...reference, strokes: edgeClean }, edgeNoisy);
+assert.ok(trimmedPressure.pressure.score > 95, 'pressure scoring should ignore noisy contact/lift samples');
+assert.equal(trimmedPressure.pressure.confidence, 'real');
+const sparseDiagnostics = core.diagnosticsFor({ ...reference, strokes: [reference.strokes[0]] }, [{ index: 0, points: [{ x: 0, y: 0, p: 0.5, t: 0 }] }]);
+assert.equal(sparseDiagnostics.rhythmConfidence, 'sparse');
+
+const refs = core.availableReferences();
+assert.equal(JSON.stringify(refs.map(r => r.id)), JSON.stringify(['sample-n', 'warmup-hairline', 'warmup-downstroke', 'warmup-compound']));
+assert.equal(core.referenceById('warmup-downstroke').glyph, 'downstroke');
+
+const enriched = core.applyReferenceMetadata(reference, { hand: 'test hand', tool: 'Android pen', notes: 'first useful pressure run' });
+assert.equal(enriched.hand, 'test hand');
+assert.equal(enriched.tool, 'Android pen');
+assert.equal(enriched.notes, 'first useful pressure run');
 
 console.log('Ductus core regression tests passed');

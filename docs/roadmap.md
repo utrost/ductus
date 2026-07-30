@@ -12,11 +12,18 @@ Done:
 
 - Static app shell
 - Offline-capable PWA wiring
-- One built-in Kurrent `n` reference
+- Four built-in references: Kurrent `n`, hairline, downstroke, compound curve
 - Stylus/mouse stroke capture
 - Reference JSON load/save
+- Attempt export as `.txt` for mobile sharing
+- Author metadata: hand, tool, notes
+- Stroke numbering and direction markers on the reference ghost
+- Accidental tiny-stroke filtering
+- Pointer diagnostics with pressure/sampling/stroke-count warnings
 - Attempt export
 - Five-part scoring: form, order, direction, pressure, rhythm
+- Pressure trimming for noisy contact/lift samples
+- Confidence labels for pressure/rhythm/order signals
 - Dependency-free regression tests
 - GitHub Actions CI
 - GitHub Pages deployment
@@ -24,7 +31,8 @@ Done:
 
 Remaining:
 
-- Add one or two small sample references beyond `n`
+- Run more real-device tests and adjust thresholds from actual attempts
+- Add a review view before adopting an attempt as reference
 
 Exit criterion:
 
