@@ -31,6 +31,9 @@ assert.match(html, /Pressure confidence/);
 assert.match(html, /id="pressureView"/);
 assert.match(html, /Show pressure/);
 assert.match(html, /Pressure view draws reference and attempt thickness from pressure data/);
+assert.match(html, /scrollMarginBlockStart/);
+assert.match(html, /scoreIntoView/);
+assert.match(html, /padding-bottom:calc\(12px \+ env\(safe-area-inset-bottom\) \+ 76px\)/);
 
 const checklist = fs.readFileSync(new URL('../docs/manual-device-test-checklist.md', `file://${__filename}`), 'utf8');
 assert.match(checklist, /# Manual device test checklist/);
@@ -116,6 +119,10 @@ assert.ok(diagnostics.pressureMax > diagnostics.pressureMin);
 const oneStrokeDiagnostics = core.diagnosticsFor(reference, [same[0]]);
 assert.equal(oneStrokeDiagnostics.strokeSummary, '1 valid attempt / 2 reference');
 assert.ok(oneStrokeDiagnostics.warnings.some(w => w.includes('Reference expects 2 strokes')));
+const oneStrokeScore = core.scoreAttempt(reference, [same[0]]);
+assert.equal(oneStrokeScore.direction.confidence, 'partial — stroke count mismatch');
+assert.equal(oneStrokeScore.pressure.confidence, 'real · partial');
+assert.ok(oneStrokeScore.feedback.includes('Reference expects 2 strokes'));
 
 const accidentalTap = { index: 0, points: [{ x: 260, y: 508, p: 0.1, t: 1 }] };
 const tapThenStroke = core.diagnosticsFor(reference, [accidentalTap, same[0]]);
@@ -155,8 +162,30 @@ assert.ok(core.pressureWidthFor(0.01, 10, true) >= 2, 'pressure width should cla
 assert.ok(core.pressureWidthFor(1, 10, true) <= 18, 'pressure width should cap very heavy strokes');
 const sparseDiagnostics = core.diagnosticsFor({ ...reference, strokes: [reference.strokes[0]] }, [{ index: 0, points: [{ x: 0, y: 0, p: 0.5, t: 0 }] }]);
 assert.equal(sparseDiagnostics.rhythmConfidence, 'sparse');
+const interStrokePause = core.diagnosticsFor(reference, [
+  { index: 0, points: [{ x: 0, y: 0, p: 0.3, t: 0 }, { x: 10, y: 0, p: 0.4, t: 17 }, { x: 20, y: 0, p: 0.5, t: 34 }] },
+  { index: 1, points: [{ x: 100, y: 0, p: 0.4, t: 2034 }, { x: 110, y: 0, p: 0.5, t: 2051 }, { x: 120, y: 0, p: 0.6, t: 2068 }] }
+]);
+assert.equal(interStrokePause.rhythmConfidence, 'good');
+assert.equal(interStrokePause.maxDt, 17);
+assert.equal(interStrokePause.maxInterStrokeGap, 2000);
+assert.ok(interStrokePause.warnings.some(w => w.includes('Pause between strokes 2000 ms')));
+assert.ok(!interStrokePause.warnings.some(w => w.includes('Sampling gap 2000')));
+const inStrokePause = core.diagnosticsFor({ ...reference, strokes: [reference.strokes[0]] }, [
+  { index: 0, points: [{ x: 0, y: 0, p: 0.3, t: 0 }, { x: 10, y: 0, p: 0.4, t: 17 }, { x: 20, y: 0, p: 0.5, t: 180 }] }
+]);
+assert.equal(inStrokePause.rhythmConfidence, 'noisy');
+assert.ok(inStrokePause.warnings.some(w => w.includes('In-stroke sampling gap 163 ms')));
 
 const refs = core.availableReferences();
+const hairline = core.referenceById('warmup-hairline');
+const mediumHairline = [{ index: 0, points: hairline.strokes[0].points.map((p, i) => ({ ...p, p: i ? 0.5 : 0.4, t: i * 17 })) }];
+const mediumHairlineScore = core.scoreAttempt(hairline, mediumHairline);
+assert.ok(mediumHairlineScore.feedback.includes('Hairline pressure stayed medium/heavy'));
+const compound = core.referenceById('warmup-compound');
+const heavyCompound = [{ index: 0, points: compound.strokes[0].points.map((p, i) => ({ ...p, p: 0.75, t: i * 17 })) }];
+const heavyCompoundScore = core.scoreAttempt(compound, heavyCompound);
+assert.ok(heavyCompoundScore.feedback.includes('Compound curve should read thin → thick → thin'));
 assert.equal(JSON.stringify(refs.map(r => r.id)), JSON.stringify(['sample-n', 'warmup-hairline', 'warmup-downstroke', 'warmup-compound']));
 assert.equal(core.referenceById('warmup-downstroke').glyph, 'downstroke');
 
