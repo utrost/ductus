@@ -9,6 +9,8 @@ The current version is a static web app and PWA. No backend. No account. No anal
 - App: <https://utrost.github.io/ductus/>
 - Source: <https://github.com/utrost/ductus>
 - Roadmap: [docs/roadmap.md](docs/roadmap.md)
+- Device findings: [docs/device-testing-findings.md](docs/device-testing-findings.md)
+- Manual test checklist: [docs/manual-device-test-checklist.md](docs/manual-device-test-checklist.md)
 - License: MIT
 
 ## Current status
@@ -20,23 +22,28 @@ Implemented now:
 - Single-page app in `index.html`
 - PWA manifest, service worker, and install icons
 - Mobile-responsive layout
-- Built-in Kurrent `n` reference
+- Four built-in references: Kurrent `n`, hairline, downstroke, compound curve
 - Stylus and mouse stroke capture
 - Pressure capture where the browser/device exposes it
+- Optional **Show pressure** view with pressure-based stroke thickness
 - Practice mode with scoring
 - Author mode for turning an attempt into a reference
-- Reference JSON load/save
-- Attempt JSON export
+- Reference JSON load/save with hand/tool/notes metadata
+- Attempt `.txt` export for mobile sharing
 - Five scoring dimensions: form, order, direction, pressure, rhythm
+- Confidence labels for pressure, rhythm, order, and partial stroke-count mismatches
+- Pointer diagnostics that separate in-stroke sampling gaps from inter-stroke pauses
+- Plain-language pressure hints for hairline, compound curve, and heavy Kurrent second strokes
 - Dependency-free Node regression tests
 - GitHub Actions CI
 - GitHub Pages deployment
 
 Known limits:
 
-- Only one built-in reference glyph exists.
-- Pressure behavior depends on browser and hardware.
-- Authoring a good reference still needs judgement.
+- Built-in references are still calibration samples, not authoritative writing models.
+- Pressure behavior depends on browser, hardware, stylus, and grip; numeric thresholds are still being tuned from real attempts.
+- The pressure view makes raw pressure visible, but the app still needs better per-stroke mismatch markers.
+- Authoring a good reference still needs judgement and a review step before adoption.
 - There is no local progress history yet.
 - Accessibility around the drawing surface needs work.
 
@@ -66,13 +73,16 @@ Opening `index.html` directly from disk works for quick experiments, but service
 ## Basic use
 
 1. Open Ductus.
-2. Draw the sample glyph with a stylus or mouse.
-3. Click **Score**.
-4. Read the five bars separately.
-5. Use **Clear** or **Undo** and try again.
-6. Switch to **Author** mode to draw a new reference.
-7. Click **Adopt attempt as reference**.
-8. Save the reference JSON if you want to keep it.
+2. Pick a reference: Kurrent `n`, hairline, downstroke, or compound curve.
+3. Optionally enable **Show pressure** to draw reference and attempt strokes with pressure-based thickness.
+4. Draw the sample with a stylus or mouse.
+5. Click **Score**.
+6. Read the five bars separately.
+7. Use **Save attempt** to export a `.txt` file when sharing device-test data.
+8. Use **Clear** or **Undo** and try again.
+9. Switch to **Author** mode to draw a new reference.
+10. Click **Adopt attempt as reference**.
+11. Save the reference JSON if you want to keep it.
 
 The bars are deliberately separate. A stroke can have the right shape but the wrong direction. It can be in the right place but written in the wrong order. One total score would hide that.
 
@@ -83,8 +93,10 @@ Ductus scores five things:
 - **Form:** path placement, using DTW over arc-length-resampled points
 - **Order:** whether strokes appear in the same order as the reference
 - **Direction:** whether each stroke travels the same way
-- **Pressure:** correlation between reference pressure and attempt pressure
-- **Rhythm:** a rough velocity-variance heuristic
+- **Pressure:** correlation between reference pressure and attempt pressure, with noisy contact/lift samples trimmed before comparison
+- **Rhythm:** a rough velocity-variance heuristic; diagnostics now report in-stroke sampling gaps separately from pauses between strokes
+
+The app also reports confidence labels where the data is known to be partial: missing/flat/real pressure, sparse/noisy/good rhythm sampling, and stroke-count mismatches that make direction or pressure comparisons only partial.
 
 The scoring is intentionally transparent. The prototype should help find useful feedback, not pretend to be an authority.
 
@@ -123,6 +135,8 @@ Coordinates are normalized to the reference canvas. The scorer resamples paths b
 ├── icons/                     # SVG and PNG install icons
 ├── tests/ductus-core.test.cjs # Headless regression tests
 ├── docs/roadmap.md            # Roadmap and open questions
+├── docs/device-testing-findings.md # Current real-device findings and calibration notes
+├── docs/manual-device-test-checklist.md # Manual stylus test script
 └── .github/workflows/         # CI, AI-prune, GitHub Pages deploy
 ```
 

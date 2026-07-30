@@ -24,6 +24,12 @@ Done:
 - Five-part scoring: form, order, direction, pressure, rhythm
 - Pressure trimming for noisy contact/lift samples
 - Confidence labels for pressure/rhythm/order signals
+- Pressure visualization toggle with pressure-based stroke thickness
+- Mobile score auto-scroll and bottom padding for Android/Chrome browser UI
+- Rhythm diagnostics split in-stroke sampling gaps from inter-stroke pauses
+- Partial confidence labels for stroke-count mismatch cases
+- First pressure feedback hints for hairline, compound curve, and heavy Kurrent second strokes
+- Current device-testing findings documented
 - Dependency-free regression tests
 - GitHub Actions CI
 - GitHub Pages deployment
@@ -31,8 +37,14 @@ Done:
 
 Remaining:
 
-- Run more real-device tests and adjust thresholds from actual attempts
+- Continue real-device tests with paired intentional attempts:
+  - hairline: light vs deliberately heavy
+  - downstroke: firm/heavy vs deliberately light
+  - compound curve: good thin → thick → thin vs heavy-throughout
+  - Kurrent `n`: normal two-stroke vs single-stroke/wrong-count edge case
+- Tune numeric pressure thresholds from those paired attempts
 - Add a review view before adopting an attempt as reference
+- Add per-stroke visual mismatch markers for form/pressure/rhythm
 
 Exit criterion:
 
@@ -44,10 +56,10 @@ Goal: make it easier to create reference glyphs that are actually useful.
 
 Planned work:
 
-- Add a reference metadata panel: script, glyph, hand, nib/pen, notes
+- Add a reference metadata panel: script, glyph, hand, nib/pen, notes ✓ initial hand/tool/notes fields exist
 - Make baseline and x-height editable in author mode
 - Show per-stroke hints while practicing
-- Add stroke numbering and direction arrows to the reference ghost
+- Add stroke numbering and direction arrows to the reference ghost ✓ initial markers exist
 - Add a review view before adopting an attempt as reference
 - Add import/export examples under `examples/`
 
@@ -61,10 +73,11 @@ Goal: find out what the browser gives us on real hardware.
 
 Planned work:
 
-- Test Android tablet + stylus pressure
+- Test Android tablet + stylus pressure ✓ first Android Chrome stylus pass done
 - Test iPad/Safari behavior
 - Test desktop drawing tablet behavior
-- Record pressure ranges and event sampling rates
+- Record pressure ranges and event sampling rates ✓ first exported attempts recorded in findings
+- Add pressure visualization for reference/attempt traces ✓ initial Show pressure toggle exists
 - Add an in-app pressure calibration strip
 - Decide whether pressure scoring should be optional per reference
 
@@ -82,7 +95,7 @@ Planned work:
 - Highlight reversed strokes
 - Show the closest reference stroke for each attempt stroke
 - Split pressure feedback from form feedback visually
-- Add short plain-language feedback for common failure cases
+- Add short plain-language feedback for common failure cases ✓ first pressure/count-mismatch hints exist
 - Save attempt history locally, probably in IndexedDB
 
 Exit criterion:

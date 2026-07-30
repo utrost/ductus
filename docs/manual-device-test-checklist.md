@@ -31,20 +31,24 @@ Nice to have later:
 ## Smoke test
 
 1. Open Ductus.
-2. Draw the built-in Kurrent `n` with the stylus.
-3. Click **Score**.
-4. Confirm the five bars update.
-5. Click **Save attempt**.
-6. Reload the page.
-7. Confirm the app still opens while online.
-8. If installed as a PWA, turn network off and open it again.
+2. Confirm **Show pressure** is visible.
+3. Draw the built-in Kurrent `n` with the stylus.
+4. Enable **Show pressure** and confirm the visible stroke thickness changes with pressure.
+5. Click **Score**.
+6. Confirm the five bars update and the score block is scrolled into view on mobile.
+7. Click **Save attempt**.
+8. Reload the page.
+9. Confirm the app still opens while online.
+10. If installed as a PWA, turn network off and open it again.
 
 Expected result:
 
 - Drawing works with pen or mouse.
 - Finger input is ignored.
 - Scoring does not crash.
-- Attempt JSON downloads.
+- Attempt `.txt` downloads.
+- **Show pressure** makes heavy strokes visibly thicker than light strokes.
+- Mobile score metrics remain reachable above browser chrome after pressing **Score**.
 - Installed/offline app shell opens after one online load.
 
 ## Pointer behavior
@@ -59,14 +63,18 @@ While drawing, note:
 
 ## Pressure range
 
-Draw four test strokes:
+Draw these attempts with **Show pressure** enabled, press **Score**, then save the attempt `.txt` and take a screenshot when the visible score looks surprising:
 
-1. Very light stroke.
-2. Medium stroke.
-3. Heavy stroke.
-4. One stroke that fades from light to heavy and back.
+1. Warm-up hairline, as light as possible.
+2. Warm-up hairline, deliberately too heavy.
+3. Warm-up downstroke, firm/heavy and steady.
+4. Warm-up downstroke, deliberately too light.
+5. Warm-up compound curve, deliberate thin → thick → thin.
+6. Warm-up compound curve, deliberately heavy throughout.
+7. Kurrent `n`, normal two-stroke attempt.
+8. Kurrent `n`, deliberately wrong stroke count or wrong direction.
 
-Then export the attempt JSON and inspect point pressure values.
+Then inspect point pressure values from the exported `.txt` files.
 
 Record:
 
