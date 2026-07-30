@@ -28,6 +28,9 @@ assert.match(html, /value="warmup-downstroke"/);
 assert.match(html, /value="warmup-compound"/);
 assert.match(html, /drawReferenceMarkers/);
 assert.match(html, /Pressure confidence/);
+assert.match(html, /id="pressureView"/);
+assert.match(html, /Show pressure/);
+assert.match(html, /Pressure view draws reference and attempt thickness from pressure data/);
 
 const checklist = fs.readFileSync(new URL('../docs/manual-device-test-checklist.md', `file://${__filename}`), 'utf8');
 assert.match(checklist, /# Manual device test checklist/);
@@ -145,6 +148,11 @@ const edgeClean = [{ index: 0, points: [
 const trimmedPressure = core.scoreAttempt({ ...reference, strokes: edgeClean }, edgeNoisy);
 assert.ok(trimmedPressure.pressure.score > 95, 'pressure scoring should ignore noisy contact/lift samples');
 assert.equal(trimmedPressure.pressure.confidence, 'real');
+assert.equal(core.pressureWidthFor(0, 10, false), 10);
+assert.equal(core.pressureWidthFor(0.5, 10, false), 10);
+assert.ok(core.pressureWidthFor(0.15, 10, true) < core.pressureWidthFor(0.85, 10, true), 'pressure view should widen heavy segments');
+assert.ok(core.pressureWidthFor(0.01, 10, true) >= 2, 'pressure width should clamp tiny contact samples');
+assert.ok(core.pressureWidthFor(1, 10, true) <= 18, 'pressure width should cap very heavy strokes');
 const sparseDiagnostics = core.diagnosticsFor({ ...reference, strokes: [reference.strokes[0]] }, [{ index: 0, points: [{ x: 0, y: 0, p: 0.5, t: 0 }] }]);
 assert.equal(sparseDiagnostics.rhythmConfidence, 'sparse');
 
