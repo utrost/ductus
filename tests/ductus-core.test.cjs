@@ -97,14 +97,25 @@ const pressure = core.scoreAttempt({ ...reference, strokes: [reference.strokes[0
 assert.ok(pressure.pressure.score < 70, 'inverted pressure should fail pressure');
 
 const diagnostics = core.diagnosticsFor(reference, same);
-assert.equal(diagnostics.strokeSummary, '2 attempt / 2 reference');
+assert.equal(diagnostics.strokeSummary, '2 valid attempt / 2 reference');
 assert.equal(diagnostics.pressureStatus, 'real');
 assert.ok(diagnostics.pointCount > 0);
 assert.ok(diagnostics.pressureMax > diagnostics.pressureMin);
 
 const oneStrokeDiagnostics = core.diagnosticsFor(reference, [same[0]]);
-assert.equal(oneStrokeDiagnostics.strokeSummary, '1 attempt / 2 reference');
+assert.equal(oneStrokeDiagnostics.strokeSummary, '1 valid attempt / 2 reference');
 assert.ok(oneStrokeDiagnostics.warnings.some(w => w.includes('Reference expects 2 strokes')));
+
+const accidentalTap = { index: 0, points: [{ x: 260, y: 508, p: 0.1, t: 1 }] };
+const tapThenStroke = core.diagnosticsFor(reference, [accidentalTap, same[0]]);
+assert.equal(tapThenStroke.strokeSummary, '1 valid attempt / 2 reference');
+assert.equal(tapThenStroke.ignoredStrokeCount, 1);
+assert.ok(tapThenStroke.warnings.some(w => w.includes('Ignored 1 tiny stroke')));
+
+const scoredWithTap = core.scoreAttempt(reference, [accidentalTap, ...same]);
+const scoredWithoutTap = core.scoreAttempt(reference, same);
+assert.equal(scoredWithTap.order.score, scoredWithoutTap.order.score);
+assert.ok(scoredWithTap.feedback.includes('Ignored 1 tiny stroke'));
 
 const flatPressureStroke = [{ index: 0, points: reference.strokes[0].points.map(p => ({ ...p, p: 0.5 })) }];
 const flatDiagnostics = core.diagnosticsFor({ ...reference, strokes: [reference.strokes[0]] }, flatPressureStroke);
