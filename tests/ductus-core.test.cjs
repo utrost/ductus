@@ -113,6 +113,22 @@ assert.ok(perfect.form.score > 95);
 assert.ok(perfect.direction.score > 95);
 assert.ok(perfect.pressure.score > 95);
 
+element('pressureView').checked = true;
+element('glyphSelect').value = 'sample-n';
+const exportPayload = core.exportAttemptPayload(reference, same);
+assert.equal(exportPayload.settings.showPressure, true);
+assert.equal(exportPayload.settings.mode, 'practice');
+assert.equal(exportPayload.settings.selectedReferenceId, 'sample-n');
+assert.equal(exportPayload.settings.referenceScript, 'kurrent');
+assert.equal(exportPayload.settings.referenceGlyph, 'n');
+assert.equal(exportPayload.score.form.score, perfect.form.score);
+assert.equal(exportPayload.score.order.score, perfect.order.score);
+assert.equal(exportPayload.score.direction.score, perfect.direction.score);
+assert.equal(exportPayload.score.pressure.confidence, perfect.pressure.confidence);
+assert.equal(exportPayload.score.rhythm.label, 'Writing rhythm');
+assert.equal(exportPayload.diagnostics.strokeSummary, '2 valid attempt / 2 reference');
+assert.equal(exportPayload.strokes.length, 2);
+
 const reversedStroke = [JSON.parse(JSON.stringify(reference.strokes[0]))];
 reversedStroke[0].points.reverse();
 const reversed = core.scoreAttempt({ ...reference, strokes: [reference.strokes[0]] }, reversedStroke);

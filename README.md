@@ -33,7 +33,7 @@ Implemented now:
 - Five scoring dimensions: form, order, direction, pressure, rhythm
 - Confidence labels for pressure, rhythm, order, and partial stroke-count mismatches
 - Pointer diagnostics that separate in-stroke sampling gaps from inter-stroke pauses
-- Attempt `.txt` exports include browser/device context for cross-browser testing
+- Attempt `.txt` exports include browser/device context, app settings, score output, diagnostics, and raw strokes for cross-browser testing
 - Plain-language pressure hints for hairline, compound curve, and heavy Kurrent second strokes
 - Dependency-free Node regression tests
 - GitHub Actions CI

@@ -14,7 +14,7 @@ Record this before drawing:
 - Ductus URL or commit:
 - Date:
 
-The exported attempt `.txt` now records browser/device context automatically: user agent, platform, touch-point count, DPR, viewport size, PointerEvent support, and coalesced-event support. Still write the plain device/browser names above because user-agent strings are not always readable.
+The exported attempt `.txt` now records browser/device context automatically: user agent, platform, touch-point count, DPR, viewport size, PointerEvent support, and coalesced-event support. It also embeds the active app settings, including selected reference, mode, and whether **Show pressure** was enabled; the full score object; diagnostics; and raw strokes. Still write the plain device/browser names above because user-agent strings are not always readable.
 
 ## Browser matrix for this pass
 
