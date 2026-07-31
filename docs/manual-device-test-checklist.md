@@ -14,6 +14,19 @@ Record this before drawing:
 - Ductus URL or commit:
 - Date:
 
+The exported attempt `.txt` now records browser/device context automatically: user agent, platform, touch-point count, DPR, viewport size, PointerEvent support, and coalesced-event support. Still write the plain device/browser names above because user-agent strings are not always readable.
+
+## Browser matrix for this pass
+
+This comparison makes sense. Use the same attempts on each browser so the data can be compared:
+
+- Windows Chrome
+- Windows Firefox
+- Android Chrome
+- Android Firefox
+
+For each browser, do one hard refresh before testing. On Android/Chrome, if the installed PWA or browser still behaves strangely, clear site data for GitHub Pages or append a harmless query string such as `?test=2026-07-31`.
+
 ## Devices to cover
 
 Minimum useful set:

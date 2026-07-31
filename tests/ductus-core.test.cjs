@@ -42,6 +42,10 @@ assert.match(checklist, /iPad\/Safari/);
 assert.match(checklist, /Desktop drawing tablet/);
 assert.match(checklist, /pressure range/i);
 assert.match(checklist, /event sampling/i);
+assert.match(checklist, /Windows Chrome/);
+assert.match(checklist, /Android Firefox/);
+assert.match(html, /environmentSnapshot/);
+assert.match(html, /maxTouchPoints/);
 
 const manifest = JSON.parse(fs.readFileSync(new URL('../manifest.webmanifest', `file://${__filename}`), 'utf8'));
 assert.equal(manifest.name, 'Ductus');
@@ -74,13 +78,26 @@ class MockElement {
 const elements = new Map();
 function element(id) { if (!elements.has(id)) elements.set(id, new MockElement(id === 'board' ? 'canvas' : 'div')); return elements.get(id); }
 const document = { getElementById: element, createElement: tag => new MockElement(tag), addEventListener: noop, removeEventListener: noop };
-const window = { devicePixelRatio: 1, addEventListener: noop, removeEventListener: noop, matchMedia: () => ({ matches: false }) };
+const window = { devicePixelRatio: 2, addEventListener: noop, removeEventListener: noop, matchMedia: () => ({ matches: false }) };
 window.window = window; window.document = document;
-const sandbox = { window, document, console, Date, Math, Number, String, Array, JSON, Blob: class Blob {}, URL: { createObjectURL: () => 'blob:test', revokeObjectURL: noop }, setTimeout, clearTimeout, innerWidth: 1000, innerHeight: 1000, alert: noop };
+const navigator = {
+  userAgent: 'TestBrowser/1.0 Firefox/140.0',
+  platform: 'TestOS',
+  maxTouchPoints: 5,
+  serviceWorker: { register: noop }
+};
+const sandbox = { window, document, navigator, console, Date, Math, Number, String, Array, JSON, Blob: class Blob {}, URL: { createObjectURL: () => 'blob:test', revokeObjectURL: noop }, setTimeout, clearTimeout, innerWidth: 1000, innerHeight: 1000, alert: noop, PointerEvent: function PointerEvent() {} };
 vm.createContext(sandbox);
 vm.runInContext(scripts[0][1], sandbox, { filename: 'index.html' });
 const core = window.__ductus;
 assert.ok(core, 'Ductus should expose a headless test API');
+const environment = core.environmentSnapshot();
+assert.equal(environment.userAgent, 'TestBrowser/1.0 Firefox/140.0');
+assert.equal(environment.platform, 'TestOS');
+assert.equal(environment.maxTouchPoints, 5);
+assert.equal(environment.devicePixelRatio, 2);
+assert.equal(environment.pointerEvent, true);
+assert.equal(environment.coalescedEvents, false);
 
 const reference = {
   script: 'kurrent', glyph: 'n', canvas: { width: 1000, height: 1000, baseline: 700, xHeight: 400 },
