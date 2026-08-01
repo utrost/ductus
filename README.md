@@ -6,7 +6,8 @@ It does not try to decide whether the final drawing looks nice. It compares how 
 
 The current version is a static web app and PWA. No backend. No account. No analytics. It can run from a local file for quick tests, or from GitHub Pages when installed as an app.
 
-- App: <https://utrost.github.io/ductus/>
+- App: <https://simiono.com/ductus/>
+- GitHub Pages mirror: <https://utrost.github.io/ductus/>
 - Source: <https://github.com/utrost/ductus>
 - Roadmap: [docs/roadmap.md](docs/roadmap.md)
 - Device findings: [docs/device-testing-findings.md](docs/device-testing-findings.md)
@@ -51,6 +52,12 @@ Known limits:
 ## Try it
 
 Use the hosted app:
+
+```text
+https://simiono.com/ductus/
+```
+
+Mirror:
 
 ```text
 https://utrost.github.io/ductus/
@@ -159,14 +166,17 @@ The tests intentionally avoid external dependencies. They load the inline app sc
 
 ## Deployment
 
-GitHub Pages is served from the static app shell. The deployment workflow copies these files into the Pages artifact:
+The app uses relative paths, so the same static files can run under `/ductus/` on simiono.com and GitHub Pages.
+
+Deployable files:
 
 - `index.html`
 - `manifest.webmanifest`
 - `sw.js`
 - `icons/`
+- `docs/`
 
-The app uses relative paths so it can run under `/ductus/` on GitHub Pages.
+GitHub Pages is served by `.github/workflows/deploy-pages.yml`. simiono.com is a separate FTPS deploy of the same static app shell to `/ductus/`.
 
 ## Non-goals for now
 
