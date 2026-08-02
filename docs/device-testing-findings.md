@@ -20,10 +20,23 @@ The Android/stylus attempts produced broad pressure ranges, including values nea
 Examples seen in exported attempts:
 
 - Kurrent `n`: pressure values ranged from about `0.006` to `1.000`
+- Warm-up downstrokes on the same Android Chrome stylus setup varied from about `0.25–0.46` median/peak-ish controlled pressure to much higher force in other attempts
 - Warm-up hairline: pressure was often medium rather than truly light
 - Compound curve attempts showed when a stroke stayed heavy throughout instead of reading thin → thick → thin
 
 The **Show pressure** toggle is therefore useful: it makes score surprises visible instead of hiding them behind a number.
+
+### Pressure should be profiled, not treated as one universal absolute scale
+
+The Android Chrome batch shows useful stylus pressure, but ordinary controlled strokes do not always use the full `0–1` range. The scorer now keeps raw pressure, trims contact/lift samples for comparison, and exports a pressure profile summary:
+
+- raw min/max
+- trimmed min/max
+- median
+- p90 and p95
+- range label: `flat`, `narrow`, `useful`, or `broad`
+
+Pressure comparison now favors curve shape after per-attempt normalization, so a compressed-but-correct device range can still match a reference. Raw values remain in the export for later calibration.
 
 ### Hairline reference needs calibration samples
 
@@ -67,6 +80,14 @@ Only in-stroke gaps should make rhythm confidence noisy.
 ### Mobile score visibility is a real UX issue
 
 Repeated screenshots showed Android Chrome browser chrome covering the lower score/feedback area. The app now adds mobile bottom padding and scrolls the metrics block into view after scoring.
+
+### High pressure score can still need form context
+
+Real attempts showed a case where the pressure curve looked plausible while the downstroke path wandered far from the reference. The app now adds plain feedback for that combination instead of letting a high pressure score look like a general pass:
+
+- “Pressure looks plausible, but the stroke path is off…”
+
+This keeps pressure as one signal among several, not a hidden total judgement.
 
 This still needs real-device confirmation after the service worker refreshes.
 

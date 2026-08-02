@@ -34,8 +34,9 @@ Implemented now:
 - Five scoring dimensions: form, order, direction, pressure, rhythm
 - Confidence labels for pressure, rhythm, order, and partial stroke-count mismatches
 - Pointer diagnostics that separate in-stroke sampling gaps from inter-stroke pauses
-- Attempt `.txt` exports include browser/device context, app settings, score output, diagnostics, and raw strokes for cross-browser testing
+- Attempt `.txt` exports include browser/device context, app settings, score output, diagnostics, pressure profile summaries, and raw strokes for cross-browser testing
 - Plain-language pressure hints for hairline, compound curve, and heavy Kurrent second strokes
+- Cross-score feedback when pressure is plausible but form/path placement is poor
 - Dependency-free Node regression tests
 - GitHub Actions CI
 - GitHub Pages deployment
@@ -101,10 +102,10 @@ Ductus scores five things:
 - **Form:** path placement, using DTW over arc-length-resampled points
 - **Order:** whether strokes appear in the same order as the reference
 - **Direction:** whether each stroke travels the same way
-- **Pressure:** correlation between reference pressure and attempt pressure, with noisy contact/lift samples trimmed before comparison
-- **Rhythm:** a rough velocity-variance heuristic; diagnostics now report in-stroke sampling gaps separately from pauses between strokes
+- **Pressure:** pressure-shape comparison with noisy contact/lift samples trimmed and per-attempt normalization so compressed device ranges can still match the intended curve
+- **Rhythm:** a rough velocity-variance heuristic; diagnostics report in-stroke sampling gaps separately from pauses between strokes
 
-The app also reports confidence labels where the data is known to be partial: missing/flat/real pressure, sparse/noisy/good rhythm sampling, and stroke-count mismatches that make direction or pressure comparisons only partial.
+The app also reports data-quality labels where the data is known to be partial: missing/flat/real pressure, sparse/noisy/usable timing data, and stroke-count mismatches that make direction or pressure comparisons only partial. Attempt exports include a pressure profile summary with raw range, trimmed range, median, p90, p95, and range label.
 
 The scoring is intentionally transparent. The prototype should help find useful feedback, not pretend to be an authority.
 

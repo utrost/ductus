@@ -23,7 +23,9 @@ Done:
 - Attempt export
 - Five-part scoring: form, order, direction, pressure, rhythm
 - Pressure trimming for noisy contact/lift samples
-- Confidence labels for pressure/rhythm/order signals
+- Per-attempt pressure profile diagnostics in exports and the diagnostics panel
+- Pressure-shape normalization for compressed device ranges
+- Confidence/data-quality labels for pressure/rhythm/order signals
 - Pressure visualization toggle with pressure-based stroke thickness
 - Mobile score auto-scroll and bottom padding for Android/Chrome browser UI
 - Rhythm diagnostics split in-stroke sampling gaps from inter-stroke pauses
@@ -76,7 +78,7 @@ Planned work:
 - Test Android tablet + stylus pressure ✓ first Android Chrome stylus pass done
 - Test iPad/Safari behavior
 - Test desktop drawing tablet behavior
-- Record pressure ranges and event sampling rates ✓ first exported attempts recorded in findings
+- Record pressure ranges and event sampling rates ✓ exported attempts now include pressure profile summaries
 - Add pressure visualization for reference/attempt traces ✓ initial Show pressure toggle exists
 - Add an in-app pressure calibration strip
 - Decide whether pressure scoring should be optional per reference

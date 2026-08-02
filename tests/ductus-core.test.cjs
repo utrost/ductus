@@ -127,7 +127,23 @@ assert.equal(exportPayload.score.direction.score, perfect.direction.score);
 assert.equal(exportPayload.score.pressure.confidence, perfect.pressure.confidence);
 assert.equal(exportPayload.score.rhythm.label, 'Writing rhythm');
 assert.equal(exportPayload.diagnostics.strokeSummary, '2 valid attempt / 2 reference');
+assert.ok(exportPayload.diagnostics.pressureProfile, 'attempt export should include pressure profile diagnostics');
+assert.equal(exportPayload.diagnostics.pressureProfile.rangeLabel, 'broad');
+assert.ok(exportPayload.diagnostics.pressureProfile.rawMax > exportPayload.diagnostics.pressureProfile.rawMin);
+assert.ok(exportPayload.diagnostics.pressureProfile.trimmedMax > exportPayload.diagnostics.pressureProfile.trimmedMin);
+assert.ok(exportPayload.diagnostics.pressureProfile.p90 >= exportPayload.diagnostics.pressureProfile.median);
 assert.equal(exportPayload.strokes.length, 2);
+
+const compressedPressure = [{ index: 0, points: reference.strokes[0].points.map(p => ({ ...p, p: 0.1 + p.p * 0.35 })) }];
+const compressedScore = core.scoreAttempt({ ...reference, strokes: [reference.strokes[0]] }, compressedPressure);
+assert.ok(compressedScore.pressure.score > 90, 'same pressure shape in a compressed device range should still score well');
+
+const offPathDownstroke = core.referenceById('warmup-downstroke');
+const wanderingDownstroke = [{ index: 0, points: offPathDownstroke.strokes[0].points.map((p, i) => ({ ...p, x: p.x + (i === 1 ? 260 : 0) })) }];
+const offPathScore = core.scoreAttempt(offPathDownstroke, wanderingDownstroke);
+assert.ok(offPathScore.pressure.score > 90, 'pressure can be plausible when the path is wrong');
+assert.ok(offPathScore.form.score < 75, 'fixture must be clearly off path');
+assert.ok(offPathScore.feedback.includes('Pressure looks plausible, but the stroke path is off'), 'feedback should explain high pressure score on low form');
 
 const reversedStroke = [JSON.parse(JSON.stringify(reference.strokes[0]))];
 reversedStroke[0].points.reverse();
@@ -199,7 +215,7 @@ const interStrokePause = core.diagnosticsFor(reference, [
   { index: 0, points: [{ x: 0, y: 0, p: 0.3, t: 0 }, { x: 10, y: 0, p: 0.4, t: 17 }, { x: 20, y: 0, p: 0.5, t: 34 }] },
   { index: 1, points: [{ x: 100, y: 0, p: 0.4, t: 2034 }, { x: 110, y: 0, p: 0.5, t: 2051 }, { x: 120, y: 0, p: 0.6, t: 2068 }] }
 ]);
-assert.equal(interStrokePause.rhythmConfidence, 'good');
+assert.equal(interStrokePause.rhythmConfidence, 'timing data: usable');
 assert.equal(interStrokePause.maxDt, 17);
 assert.equal(interStrokePause.maxInterStrokeGap, 2000);
 assert.ok(interStrokePause.warnings.some(w => w.includes('Pause between strokes 2000 ms')));
@@ -207,7 +223,7 @@ assert.ok(!interStrokePause.warnings.some(w => w.includes('Sampling gap 2000')))
 const inStrokePause = core.diagnosticsFor({ ...reference, strokes: [reference.strokes[0]] }, [
   { index: 0, points: [{ x: 0, y: 0, p: 0.3, t: 0 }, { x: 10, y: 0, p: 0.4, t: 17 }, { x: 20, y: 0, p: 0.5, t: 180 }] }
 ]);
-assert.equal(inStrokePause.rhythmConfidence, 'noisy');
+assert.equal(inStrokePause.rhythmConfidence, 'timing data: noisy');
 assert.ok(inStrokePause.warnings.some(w => w.includes('In-stroke sampling gap 163 ms')));
 
 const refs = core.availableReferences();
