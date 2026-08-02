@@ -26,7 +26,7 @@ Implemented now:
 - Four built-in references: Kurrent `n`, hairline, downstroke, compound curve
 - Stylus and mouse stroke capture
 - Pressure capture where the browser/device exposes it
-- Optional **Show pressure** view with pressure-based stroke thickness
+- Optional `Show pressure` view with pressure-based stroke thickness
 - Practice mode with scoring
 - Author mode for turning an attempt into a reference
 - Reference JSON load/save with hand/tool/notes metadata
@@ -83,14 +83,14 @@ Opening `index.html` directly from disk works for quick experiments, but service
 
 1. Open Ductus.
 2. Pick a reference: Kurrent `n`, hairline, downstroke, or compound curve.
-3. Optionally enable **Show pressure** to draw reference and attempt strokes with pressure-based thickness.
+3. Optionally enable `Show pressure` to draw reference and attempt strokes with pressure-based thickness.
 4. Draw the sample with a stylus or mouse.
-5. Click **Score**.
+5. Click `Score`.
 6. Read the five bars separately.
-7. Use **Save attempt** to export a `.txt` file when sharing device-test data.
-8. Use **Clear** or **Undo** and try again.
-9. Switch to **Author** mode to draw a new reference.
-10. Click **Adopt attempt as reference**.
+7. Use `Save attempt` to export a `.txt` file when sharing device-test data.
+8. Use `Clear` or `Undo` and try again.
+9. Switch to `Author` mode to draw a new reference.
+10. Click `Adopt attempt as reference`.
 11. Save the reference JSON if you want to keep it.
 
 The bars are deliberately separate. A stroke can have the right shape but the wrong direction. It can be in the right place but written in the wrong order. One total score would hide that.
@@ -99,11 +99,11 @@ The bars are deliberately separate. A stroke can have the right shape but the wr
 
 Ductus scores five things:
 
-- **Form:** path placement, using DTW over arc-length-resampled points
-- **Order:** whether strokes appear in the same order as the reference
-- **Direction:** whether each stroke travels the same way
-- **Pressure:** pressure-shape comparison with noisy contact/lift samples trimmed and per-attempt normalization so compressed device ranges can still match the intended curve
-- **Rhythm:** a rough velocity-variance heuristic; diagnostics report in-stroke sampling gaps separately from pauses between strokes
+- `Form:` path placement, using DTW over arc-length-resampled points
+- `Order:` whether strokes appear in the same order as the reference
+- `Direction:` whether each stroke travels the same way
+- `Pressure:` pressure-shape comparison with noisy contact/lift samples trimmed and per-attempt normalization so compressed device ranges can still match the intended curve
+- `Rhythm:` a rough velocity-variance heuristic; diagnostics report in-stroke sampling gaps separately from pauses between strokes
 
 The app also reports data-quality labels where the data is known to be partial: missing/flat/real pressure, sparse/noisy/usable timing data, and stroke-count mismatches that make direction or pressure comparisons only partial. Attempt exports include a pressure profile summary with raw range, trimmed range, median, p90, p95, and range label.
 

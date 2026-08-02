@@ -24,7 +24,7 @@ Examples seen in exported attempts:
 - Warm-up hairline: pressure was often medium rather than truly light
 - Compound curve attempts showed when a stroke stayed heavy throughout instead of reading thin → thick → thin
 
-The **Show pressure** toggle is therefore useful: it makes score surprises visible instead of hiding them behind a number.
+The `Show pressure` toggle is therefore useful: it makes score surprises visible instead of hiding them behind a number.
 
 ### Pressure should be profiled, not treated as one universal absolute scale
 
@@ -64,7 +64,7 @@ Edge cases exposed a confusing score combination:
 - Order: `0` due to stroke-count mismatch
 - Direction: `100` because the available stroke moved in the expected direction
 
-The app now labels direction as `partial — stroke count mismatch` and pressure as `real · partial` when reference and attempt stroke counts differ.
+The app now labels direction as `partial: stroke count mismatch` and pressure as `real · partial` when reference and attempt stroke counts differ.
 
 ### Rhythm diagnostics needed separation of gap types
 
@@ -95,19 +95,19 @@ This still needs real-device confirmation after the service worker refreshes.
 
 Most useful next data set:
 
-1. Hairline — light attempt
-2. Hairline — heavy attempt
-3. Downstroke — heavy attempt
-4. Downstroke — light attempt
-5. Compound curve — good thin → thick → thin attempt
-6. Compound curve — heavy-throughout attempt
-7. Kurrent `n` — normal two-stroke attempt
-8. Kurrent `n` — wrong-count or wrong-direction attempt
+1. Hairline: light attempt
+2. Hairline: heavy attempt
+3. Downstroke: heavy attempt
+4. Downstroke: light attempt
+5. Compound curve: good thin → thick → thin attempt
+6. Compound curve: heavy-throughout attempt
+7. Kurrent `n`: normal two-stroke attempt
+8. Kurrent `n`: wrong-count or wrong-direction attempt
 
 For each attempt:
 
 - send the exported `.txt`
-- send a screenshot after scoring with **Show pressure** enabled if the visible result is surprising or if mobile layout still hides scores
+- send a screenshot after scoring with `Show pressure` enabled if the visible result is surprising or if mobile layout still hides scores
 
 ## Do not conclude yet
 

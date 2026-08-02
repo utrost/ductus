@@ -14,7 +14,7 @@ Record this before drawing:
 - Ductus URL or commit:
 - Date:
 
-The exported attempt `.txt` now records browser/device context automatically: user agent, platform, touch-point count, DPR, viewport size, PointerEvent support, and coalesced-event support. It also embeds the active app settings, including selected reference, mode, and whether **Show pressure** was enabled; the full score object; diagnostics; and raw strokes. Still write the plain device/browser names above because user-agent strings are not always readable.
+The exported attempt `.txt` now records browser/device context automatically: user agent, platform, touch-point count, DPR, viewport size, PointerEvent support, and coalesced-event support. It also embeds the active app settings, including selected reference, mode, and whether `Show pressure` was enabled; the full score object; diagnostics; and raw strokes. Still write the plain device/browser names above because user-agent strings are not always readable.
 
 ## Browser matrix for this pass
 
@@ -44,12 +44,12 @@ Nice to have later:
 ## Smoke test
 
 1. Open Ductus.
-2. Confirm **Show pressure** is visible.
+2. Confirm `Show pressure` is visible.
 3. Draw the built-in Kurrent `n` with the stylus.
-4. Enable **Show pressure** and confirm the visible stroke thickness changes with pressure.
-5. Click **Score**.
+4. Enable `Show pressure` and confirm the visible stroke thickness changes with pressure.
+5. Click `Score`.
 6. Confirm the five bars update and the score block is scrolled into view on mobile.
-7. Click **Save attempt**.
+7. Click `Save attempt`.
 8. Reload the page.
 9. Confirm the app still opens while online.
 10. If installed as a PWA, turn network off and open it again.
@@ -60,8 +60,8 @@ Expected result:
 - Finger input is ignored.
 - Scoring does not crash.
 - Attempt `.txt` downloads.
-- **Show pressure** makes heavy strokes visibly thicker than light strokes.
-- Mobile score metrics remain reachable above browser chrome after pressing **Score**.
+- `Show pressure` makes heavy strokes visibly thicker than light strokes.
+- Mobile score metrics remain reachable above browser chrome after pressing `Score`.
 - Installed/offline app shell opens after one online load.
 
 ## Pointer behavior
@@ -76,7 +76,7 @@ While drawing, note:
 
 ## Pressure range
 
-Draw these attempts with **Show pressure** enabled, press **Score**, then save the attempt `.txt` and take a screenshot when the visible score looks surprising:
+Draw these attempts with `Show pressure` enabled, press `Score`, then save the attempt `.txt` and take a screenshot when the visible score looks surprising:
 
 1. Warm-up hairline, as light as possible.
 2. Warm-up hairline, deliberately too heavy.
@@ -136,10 +136,10 @@ Use the built-in glyph.
 
 Expected result:
 
-- Backwards stroke should reduce **Direction** more than **Form**.
-- Swapped strokes should reduce **Order** more than **Form**.
-- Uneven stop-start drawing should reduce **Rhythm**.
-- If pressure is missing or constant, **Pressure** should not be trusted yet.
+- Backwards stroke should reduce `Direction` more than `Form`.
+- Swapped strokes should reduce `Order` more than `Form`.
+- Uneven stop-start drawing should reduce `Rhythm`.
+- If pressure is missing or constant, `Pressure` should not be trusted yet.
 
 ## Notes to bring back
 
