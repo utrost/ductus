@@ -11,6 +11,7 @@ The current version is a static web app and PWA. No backend. No account. No anal
 - Source: <https://github.com/utrost/ductus>
 - Roadmap: [docs/roadmap.md](docs/roadmap.md)
 - Device findings: [docs/device-testing-findings.md](docs/device-testing-findings.md)
+- First calibration batch: [docs/calibration-2026-08-05-firefox-android.md](docs/calibration-2026-08-05-firefox-android.md)
 - Manual test checklist: [docs/manual-device-test-checklist.md](docs/manual-device-test-checklist.md)
 - License: MIT
 

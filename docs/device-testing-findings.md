@@ -91,24 +91,47 @@ This keeps pressure as one signal among several, not a hidden total judgement.
 
 This still needs real-device confirmation after the service worker refreshes.
 
-## Current data request
+## Calibration batch received: 2026-08-05 Android Firefox
 
-Most useful next data set:
+The first paired calibration batch is now preserved under:
+
+```text
+data/calibration/2026-08-05-firefox-android/
+```
+
+Detailed notes:
+
+```text
+docs/calibration-2026-08-05-firefox-android.md
+```
+
+The batch covers:
 
 1. Hairline: light attempt
 2. Hairline: heavy attempt
 3. Downstroke: heavy attempt
 4. Downstroke: light attempt
-5. Compound curve: good thin → thick → thin attempt
+5. Compound curve: more plausible thin → thick → thin attempt
 6. Compound curve: heavy-throughout attempt
 7. Kurrent `n`: normal two-stroke attempt
-8. Kurrent `n`: wrong-count or wrong-direction attempt
+8. Kurrent `n`: wrong-count/wrong-order attempt
 
-For each attempt:
+Most important finding: pressure signal is real, but the current `flat` label is overloaded. It describes low variation, not pressure level. A flat light hairline, flat heavy hairline, flat heavy downstroke, and flat light downstroke need different feedback.
 
-- send the exported `.txt`
-- send a screenshot after scoring with `Show pressure` enabled if the visible result is surprising or if mobile layout still hides scores
+## Next implementation target
+
+Add pressure diagnostics and feedback that separate:
+
+- pressure level: low / medium / high
+- pressure variation: flat / narrow / useful / broad
+
+Then add reference-specific expectations:
+
+- hairline: low level, low/even variation
+- downstroke: high level, steady profile
+- compound curve: lighter entry/exit, heavier middle
+- Kurrent `n`: first stroke lighter, second stroke heavier then tapering
 
 ## Do not conclude yet
 
-Not enough data yet to finalize numeric thresholds for pressure or rhythm. Enough data exists to improve diagnostics, visibility, confidence labels, and first feedback hints.
+The batch is enough to improve pressure diagnostics and reference-specific pressure feedback. It is not enough to finalize rhythm scoring: all Firefox exports still report noisy timing, with large in-stroke gaps.

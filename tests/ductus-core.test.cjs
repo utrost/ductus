@@ -187,7 +187,9 @@ assert.ok(scoredWithTap.feedback.includes('Ignored 1 tiny stroke'));
 const flatPressureStroke = [{ index: 0, points: reference.strokes[0].points.map(p => ({ ...p, p: 0.5 })) }];
 const flatDiagnostics = core.diagnosticsFor({ ...reference, strokes: [reference.strokes[0]] }, flatPressureStroke);
 assert.equal(flatDiagnostics.pressureStatus, 'flat');
-assert.ok(flatDiagnostics.warnings.some(w => w.includes('Pressure looks flat')));
+assert.equal(flatDiagnostics.pressureProfile.levelLabel, 'medium');
+assert.equal(flatDiagnostics.pressureProfile.variationLabel, 'flat');
+assert.ok(flatDiagnostics.warnings.some(w => w.includes('Pressure variation is flat')));
 
 const edgeNoisy = [{ index: 0, points: [
   { x: 0, y: 0, p: 0, t: 0 },
@@ -227,14 +229,40 @@ assert.equal(inStrokePause.rhythmConfidence, 'timing data: noisy');
 assert.ok(inStrokePause.warnings.some(w => w.includes('In-stroke sampling gap 163 ms')));
 
 const refs = core.availableReferences();
+const calibrationDir = new URL('../data/calibration/2026-08-05-firefox-android/', `file://${__filename}`);
+function calibrationAttempt(name) { return JSON.parse(fs.readFileSync(new URL(name, calibrationDir), 'utf8')); }
+const lightHairlineExport = calibrationAttempt('warmup-hairline-attempt-2.json');
+const heavyHairlineExport = calibrationAttempt('warmup-hairline-attempt-3.json');
+const heavyDownstrokeExport = calibrationAttempt('warmup-downstroke-attempt-1.json');
+const lightDownstrokeExport = calibrationAttempt('warmup-downstroke-attempt-2.json');
+const plausibleCompoundExport = calibrationAttempt('warmup-compound-curve-attempt-3.json');
+const heavyCompoundExport = calibrationAttempt('warmup-compound-curve-attempt-4.json');
+const normalKurrentExport = calibrationAttempt('kurrent-n-attempt-4.json');
+const wrongCountKurrentExport = calibrationAttempt('kurrent-n-attempt-5.json');
+assert.equal(core.pressureProfileFor(lightHairlineExport.strokes).levelLabel, 'low');
+assert.equal(core.pressureProfileFor(lightHairlineExport.strokes).variationLabel, 'flat');
+assert.equal(core.pressureProfileFor(heavyHairlineExport.strokes).levelLabel, 'high');
+assert.equal(core.pressureProfileFor(lightDownstrokeExport.strokes).levelLabel, 'low');
+assert.equal(core.pressureProfileFor(heavyDownstrokeExport.strokes).levelLabel, 'high');
+assert.equal(core.pressureProfileFor(normalKurrentExport.strokes).variationLabel, 'useful');
+assert.ok(core.scoreAttempt(core.referenceById('warmup-hairline'), lightHairlineExport.strokes).pressure.score > 80, 'light hairline should get a strong pressure score despite device-floor readings');
+assert.ok(core.scoreAttempt(core.referenceById('warmup-hairline'), lightHairlineExport.strokes).pressure.score > core.scoreAttempt(core.referenceById('warmup-hairline'), heavyHairlineExport.strokes).pressure.score, 'light hairline should pressure-score better than heavy hairline');
+assert.ok(core.scoreAttempt(core.referenceById('warmup-hairline'), heavyHairlineExport.strokes).feedback.includes('Hairline pressure stayed too heavy'));
+assert.ok(core.scoreAttempt(core.referenceById('warmup-downstroke'), heavyDownstrokeExport.strokes).pressure.score > 80, 'heavy downstroke should get a strong pressure score even when pressure variation is flat');
+assert.ok(core.scoreAttempt(core.referenceById('warmup-downstroke'), heavyDownstrokeExport.strokes).pressure.score > core.scoreAttempt(core.referenceById('warmup-downstroke'), lightDownstrokeExport.strokes).pressure.score, 'heavy downstroke should pressure-score better than light downstroke');
+assert.ok(core.scoreAttempt(core.referenceById('warmup-downstroke'), lightDownstrokeExport.strokes).feedback.includes('Downstroke pressure stayed too light'));
+assert.ok(core.scoreAttempt(core.referenceById('warmup-compound'), plausibleCompoundExport.strokes).pressure.score > core.scoreAttempt(core.referenceById('warmup-compound'), heavyCompoundExport.strokes).pressure.score, 'plausible compound should pressure-score better than heavy-throughout compound');
+assert.ok(core.scoreAttempt(core.referenceById('warmup-compound'), heavyCompoundExport.strokes).feedback.includes('entry/exit stayed too heavy'));
+assert.equal(core.scoreAttempt(core.referenceById('sample-n'), wrongCountKurrentExport.strokes).order.confidence, 'count mismatch');
+assert.ok(core.scoreAttempt(core.referenceById('sample-n'), wrongCountKurrentExport.strokes).feedback.includes('Reference expects 2 strokes; attempt has 4'));
 const hairline = core.referenceById('warmup-hairline');
 const mediumHairline = [{ index: 0, points: hairline.strokes[0].points.map((p, i) => ({ ...p, p: i ? 0.5 : 0.4, t: i * 17 })) }];
 const mediumHairlineScore = core.scoreAttempt(hairline, mediumHairline);
-assert.ok(mediumHairlineScore.feedback.includes('Hairline pressure stayed medium/heavy'));
+assert.ok(mediumHairlineScore.feedback.includes('Hairline pressure stayed too heavy'));
 const compound = core.referenceById('warmup-compound');
 const heavyCompound = [{ index: 0, points: compound.strokes[0].points.map((p, i) => ({ ...p, p: 0.75, t: i * 17 })) }];
 const heavyCompoundScore = core.scoreAttempt(compound, heavyCompound);
-assert.ok(heavyCompoundScore.feedback.includes('Compound curve should read thin → thick → thin'));
+assert.ok(heavyCompoundScore.feedback.includes('entry/exit stayed too heavy') || heavyCompoundScore.feedback.includes('Compound curve should read thin → thick → thin'));
 assert.equal(JSON.stringify(refs.map(r => r.id)), JSON.stringify(['sample-n', 'warmup-hairline', 'warmup-downstroke', 'warmup-compound']));
 assert.equal(core.referenceById('warmup-downstroke').glyph, 'downstroke');
 
