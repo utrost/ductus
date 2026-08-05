@@ -44,8 +44,8 @@ Implemented now:
 
 Known limits:
 
-- Built-in references are still calibration samples, not authoritative writing models.
-- Pressure behavior depends on browser, hardware, stylus, and grip; numeric thresholds are still being tuned from real attempts.
+- Built-in references are still calibration samples, not a real hand/glyph curriculum.
+- Pressure behavior depends on browser, hardware, stylus, and grip; thresholds now use the first Android Firefox calibration batch but still need more devices.
 - The pressure view makes raw pressure visible, but the app still needs better per-stroke mismatch markers.
 - Authoring a good reference still needs judgement and a review step before adoption.
 - There is no local progress history yet.
