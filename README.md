@@ -24,7 +24,8 @@ Implemented now:
 - Single-page app in `index.html`
 - PWA manifest, service worker, and install icons
 - Mobile-responsive layout
-- Four built-in references: Kurrent `n`, hairline, downstroke, compound curve
+- Hand/group/glyph practice chooser with first hand: Kurrent Basic
+- Four built-in references grouped as warm-ups and lowercase stems: Kurrent `n`, hairline, downstroke, compound curve
 - Stylus and mouse stroke capture
 - Pressure capture where the browser/device exposes it
 - Optional `Show pressure` view with pressure-based stroke thickness
@@ -44,7 +45,7 @@ Implemented now:
 
 Known limits:
 
-- Built-in references are still calibration samples, not a real hand/glyph curriculum.
+- Built-in references are grouped into a first starter hand, but the content is still mostly calibration samples rather than a real hand/glyph curriculum.
 - Pressure behavior depends on browser, hardware, stylus, and grip; thresholds now use the first Android Firefox calibration batch but still need more devices.
 - The pressure view makes raw pressure visible, but the app still needs better per-stroke mismatch markers.
 - Authoring a good reference still needs judgement and a review step before adoption.
@@ -83,7 +84,7 @@ Opening `index.html` directly from disk works for quick experiments, but service
 ## Basic use
 
 1. Open Ductus.
-2. Pick a reference: Kurrent `n`, hairline, downstroke, or compound curve.
+2. Pick a hand, group, and glyph. The starter path is `Kurrent Basic → Warm-ups → Hairline`.
 3. Optionally enable `Show pressure` to draw reference and attempt strokes with pressure-based thickness.
 4. Draw the sample with a stylus or mouse.
 5. Click `Score`.

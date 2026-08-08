@@ -67,7 +67,7 @@ Exit criterion:
 
 ## Phase 1: Hand Library v1
 
-Status: next.
+Status: implemented as a first thin slice; needs content expansion before it becomes a real curriculum.
 
 Goal: stop treating Ductus as a flat pile of sample references. Give the app a small hand/glyph structure so it can teach a writing style in sequence.
 
@@ -77,7 +77,30 @@ Architecture:
 - Add a plain JS data model for hands, groups, and glyph references.
 - Reuse the current reference objects. Do not introduce font files, SVG font import, or a large content pipeline yet.
 
-Planned work:
+Done in first thin slice:
+
+- Built-in `hands` registry with `kurrent-basic`.
+- First groups:
+  - `warmups`: hairline, downstroke, compound curve
+  - `lowercase-stems`: Kurrent `n`
+- Three-level practice chooser:
+  - Hand
+  - Group
+  - Glyph
+- Old reference IDs and `referenceById(...)` compatibility preserved.
+- Attempt exports include:
+  - `selectedHandId`
+  - `selectedGroupId`
+  - `selectedReferenceId`
+- Regression coverage for hands, groups, default selection, grouped references, export settings, and old flat reference compatibility.
+
+Still planned for this phase:
+
+1. Add a small amount of real Kurrent Basic content beyond sample `n`.
+2. Add user-facing group notes / practice sequence hints.
+3. Update the authoring path so a reviewed custom reference can be assigned into a hand/group.
+
+Original planned work:
 
 1. Add a built-in `hands` registry.
    - First hand: `kurrent-basic`.

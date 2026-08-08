@@ -44,19 +44,21 @@ Nice to have later:
 ## Smoke test
 
 1. Open Ductus.
-2. Confirm `Show pressure` is visible.
-3. Draw the built-in Kurrent `n` with the stylus.
-4. Enable `Show pressure` and confirm the visible stroke thickness changes with pressure.
-5. Click `Score`.
-6. Confirm the five bars update and the score block is scrolled into view on mobile.
-7. Click `Save attempt`.
-8. Reload the page.
-9. Confirm the app still opens while online.
-10. If installed as a PWA, turn network off and open it again.
+2. Confirm the hand/group/glyph chooser opens at `Kurrent Basic → Warm-ups → Hairline`.
+3. Confirm `Show pressure` is visible.
+4. Switch to `Lowercase stems → Kurrent n · sample`, draw it with the stylus.
+5. Enable `Show pressure` and confirm the visible stroke thickness changes with pressure.
+6. Click `Score`.
+7. Confirm the five bars update and the score block is scrolled into view on mobile.
+8. Click `Save attempt`.
+9. Reload the page.
+10. Confirm the app still opens while online.
+11. If installed as a PWA, turn network off and open it again.
 
 Expected result:
 
 - Drawing works with pen or mouse.
+- The chooser exposes one hand (`Kurrent Basic`), two groups (`Warm-ups`, `Lowercase stems`), and keeps all existing built-in reference IDs available.
 - Finger input is ignored.
 - Scoring does not crash.
 - Attempt `.txt` downloads.
