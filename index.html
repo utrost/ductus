@@ -56,6 +56,10 @@
   .toggle span { font-size:13px; }
   .practice-chooser { display:grid; grid-template-columns:1fr; gap:8px; }
   .chooser-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .guidance h2 { margin:0 0 6px; font-size:15px; }
+  .guidance p { margin:0; color:var(--muted); line-height:1.45; }
+  .guidance ul { margin:8px 0 0; padding-left:18px; color:var(--ink); }
+  .guidance li { margin:4px 0; }
   @media (max-width: 900px) { #app { grid-template-columns:1fr; grid-template-rows:minmax(0,1fr) auto; } #side { max-height:46vh; border-left:0; border-top:1px solid rgba(255,255,255,.08); } }
   @media (max-width: 720px) { html, body { height:100dvh; } #app { height:100dvh; } #side { padding:10px; padding-bottom:calc(12px + env(safe-area-inset-bottom) + 76px); gap:8px; max-height:50vh; scroll-padding-bottom:calc(12px + env(safe-area-inset-bottom) + 76px); } h1 { font-size:19px; } button,label.file,select { min-height:44px; padding:9px 10px; } .card { padding:10px; border-radius:12px; } .metric { grid-template-columns:72px 1fr 36px; margin:6px 0; } #metrics { scroll-margin-block-start:10px; } #referencePanel textarea { min-height:72px; max-height:140px; } }
 </style>
@@ -80,6 +84,12 @@
           <label class="toggle" title="Pressure view draws reference and attempt thickness from pressure data"><input id="pressureView" type="checkbox"><span>Show pressure</span></label>
         </div>
       </div>
+      <section id="practiceGuidance" class="guidance small" aria-label="Practice guidance">
+        <b>What to practice</b>
+        <h2 id="practiceGuidanceTitle"></h2>
+        <p id="practiceGuidanceBody"></p>
+        <ul id="practiceGuidanceCues"></ul>
+      </section>
       <details id="referencePanel" class="field">
         <summary>Reference JSON</summary>
         <textarea id="refText" spellcheck="false"></textarea>
@@ -148,6 +158,16 @@ function availableHands(){ return builtInHands().map(hand=>({...hand, groups:han
 function defaultPracticeSelection(){ const hand=availableHands()[0]; const group=hand.groups[0]; return { handId:hand.id, groupId:group.id, referenceId:group.referenceIds[0] }; }
 function resolvePracticeSelection(handId, groupId, referenceId){ const fallback=defaultPracticeSelection(); const hand=availableHands().find(h=>h.id===handId) || availableHands()[0]; const group=hand.groups.find(g=>g.id===groupId) || hand.groups[0]; const wanted=group.referenceIds.includes(referenceId) ? referenceId : group.referenceIds[0]; return { handId:hand.id, groupId:group.id, referenceId:wanted || fallback.referenceId }; }
 function referencesForGroup(handId, groupId){ const sel=resolvePracticeSelection(handId, groupId, ''); const hand=availableHands().find(h=>h.id===sel.handId); const group=hand.groups.find(g=>g.id===sel.groupId); return group.referenceIds.map(id=>availableReferences().find(ref=>ref.id===id)).filter(Boolean); }
+function practiceGuidanceFor(handId, groupId, referenceId){
+  const sel=resolvePracticeSelection(handId, groupId, referenceId);
+  const guidance={
+    'warmup-hairline': { title:'Hairline warm-up', body:'Practice a light, even upstroke. This teaches the pen to move upward without squeezing for a darker line.', cues:['Keep pressure low from start to finish.','Move in one confident upward stroke.','Judge pressure before judging beauty.'] },
+    'warmup-downstroke': { title:'Downstroke warm-up', body:'Practice a firm, steady downstroke. This is the heavy movement that later gives stems their weight.', cues:['Press into the stroke, then release near the baseline.','Keep the path vertical before tuning speed.','Do not turn this into a hairline.'] },
+    'warmup-compound': { title:'Compound curve warm-up', body:'Practice the pressure pattern thin → thick → thin. The shape matters, but the pressure swell is the lesson.', cues:['Keep entry and exit lighter than the middle.','Let pressure grow once, then release once.','Avoid staying heavy throughout the curve.'] },
+    'sample-n': { title:'Kurrent n stem practice', body:'Practice how Kurrent n combines the warm-up movements: light entry, weighted stem, second stroke, then pressure release.', cues:['Follow the two-stroke order.','Watch stroke order before judging form.','Release pressure into the final hairline.'] }
+  };
+  return guidance[sel.referenceId] || { title:'Practice reference', body:'Practice the selected glyph as a movement recipe, not as an outline to trace.', cues:['Follow stroke order.','Watch direction.','Compare pressure separately from form.'] };
+}
 function referenceById(id){ const refs=referenceFactories(); return (refs[id]||sampleReference)(); }
 function resize(){ dpr=Math.max(1,window.devicePixelRatio||1); board.width=Math.round(board.clientWidth*dpr||innerWidth*dpr); board.height=Math.round(board.clientHeight*dpr||innerHeight*dpr); render(); }
 window.addEventListener('resize', resize);
@@ -255,6 +275,19 @@ function exportAttemptPayload(ref=currentReferenceWithMetadata(), strokes=attemp
 function scoreIntoView(){ const box=document.getElementById('metrics'); if(!box) return; box.style.scrollMarginBlockStart='10px'; requestAnimationFrame(()=>box.scrollIntoView&&box.scrollIntoView({block:'start',behavior:'smooth'})); }
 function renderMetrics(result){ const box=document.getElementById('metrics'); box.innerHTML=''; for(const k of ['form','order','direction','pressure','rhythm']){ const m=result[k]; const row=document.createElement('div'); row.className='metric'; const lab=document.createElement('div'); lab.textContent=m.label; const bar=document.createElement('div'); bar.className='bar'; const fill=document.createElement('div'); fill.className='fill '+(m.score>=80?'ok':m.score>=55?'mid':''); fill.style.width=m.score+'%'; bar.appendChild(fill); const val=document.createElement('b'); val.textContent=m.score; row.append(lab,bar,val); if(m.confidence){ const conf=document.createElement('div'); conf.className='confidence'; conf.textContent=k==='pressure'?'Pressure confidence: '+m.confidence:(k==='rhythm'?m.confidence:'Confidence: '+m.confidence); row.appendChild(conf); } box.appendChild(row); } document.getElementById('feedback').textContent=result.feedback; }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.className='show'; clearTimeout(toast._timer); toast._timer=setTimeout(()=>t.className='',1800); }
+function renderPracticeGuidance(selection=defaultPracticeSelection()){
+  const sel=resolvePracticeSelection(selection.handId, selection.groupId, selection.referenceId);
+  const guidance=practiceGuidanceFor(sel.handId, sel.groupId, sel.referenceId);
+  const title=document.getElementById('practiceGuidanceTitle');
+  const body=document.getElementById('practiceGuidanceBody');
+  const cues=document.getElementById('practiceGuidanceCues');
+  if(!title || !body || !cues) return guidance;
+  title.textContent=guidance.title;
+  body.textContent=guidance.body;
+  cues.innerHTML='';
+  guidance.cues.forEach(cue=>{ const li=document.createElement('li'); li.textContent=cue; cues.appendChild(li); });
+  return guidance;
+}
 function optionHtml(value,label){ return `<option value="${value}">${label}</option>`; }
 function populatePracticeChooser(selection=defaultPracticeSelection()){
   const hands=availableHands();
@@ -278,13 +311,14 @@ function chooseReference(selection){
   attempt=[];
   updateMetadataFields();
   updateRefText();
+  renderPracticeGuidance(sel);
   render();
   renderMetrics(emptyScore('Draw a glyph, then score it.'));
   toast('Reference changed');
 }
 function wire(){ document.getElementById('practiceTab').onclick=()=>setMode('practice'); document.getElementById('authorTab').onclick=()=>setMode('author'); document.getElementById('pressureView').onchange=e=>{ showPressure=!!e.target.checked; render(); toast(showPressure?'Pressure view on':'Pressure view off'); }; document.getElementById('handSelect').onchange=e=>chooseReference({handId:e.target.value,groupId:'',referenceId:''}); document.getElementById('groupSelect').onchange=e=>chooseReference({handId:document.getElementById('handSelect').value,groupId:e.target.value,referenceId:''}); document.getElementById('glyphSelect').onchange=e=>chooseReference({handId:document.getElementById('handSelect').value,groupId:document.getElementById('groupSelect').value,referenceId:e.target.value}); document.getElementById('loadRef').onclick=loadRefFromText; document.getElementById('saveRef').onclick=()=>{ const ref=currentReferenceWithMetadata(); download(`${ref.script}-${ref.glyph}.json`,'application/json',JSON.stringify(ref,null,2)); }; document.getElementById('saveAttempt').onclick=()=>{ const ref=currentReferenceWithMetadata(); download(`${ref.script}-${ref.glyph}-attempt.txt`,'text/plain',JSON.stringify(exportAttemptPayload(ref,attempt),null,2)); }; document.getElementById('clear').onclick=()=>{ attempt=[]; render(); toast('Cleared'); }; document.getElementById('undo').onclick=()=>{ attempt.pop(); render(); }; document.getElementById('score').onclick=()=>{ reference=currentReferenceWithMetadata(); updateRefText(); renderMetrics(scoreAttempt(reference,attempt)); scoreIntoView(); }; document.getElementById('adopt').onclick=()=>{ if(!attempt.length){ alert('Draw an attempt first.'); return; } reference={...currentReferenceWithMetadata(), strokes:validStrokes(attempt).map((s,i)=>({index:i,hint:'',points:s.points.map((p,j)=>({...p,t:s.points.length>1?j/(s.points.length-1):0}))}))}; attempt=[]; updateMetadataFields(); updateRefText(); render(); toast('Attempt adopted as reference'); }; document.getElementById('openRef').onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ document.getElementById('refText').value=fr.result; loadRefFromText(); }; fr.readAsText(f); }; ['metaHand','metaTool','metaNotes'].forEach(id=>document.getElementById(id).addEventListener('input',updateRefText)); }
 function setMode(next){ mode=next; document.getElementById('practiceTab').classList.toggle('active',mode==='practice'); document.getElementById('authorTab').classList.toggle('active',mode==='author'); toast(mode==='author'?'Author mode':'Practice mode'); }
-const initialSelection=populatePracticeChooser(defaultPracticeSelection()); reference=referenceById(initialSelection.referenceId); wire(); updateMetadataFields(); updateRefText(); resize(); renderMetrics(emptyScore('Draw a glyph, then score it.'));
+const initialSelection=populatePracticeChooser(defaultPracticeSelection()); reference=referenceById(initialSelection.referenceId); wire(); updateMetadataFields(); updateRefText(); renderPracticeGuidance(initialSelection); resize(); renderMetrics(emptyScore('Draw a glyph, then score it.'));
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Ductus service worker registration failed',err)));
-window.__ductus={ scoreAttempt, resample, dtw, directionScore, pressureScore, pressureProfileFor, pressureExpectationFor, pressureWidthFor, rhythmScore, matchStrokes, diagnosticsFor, environmentSnapshot, settingsSnapshot, exportAttemptPayload, availableReferences, availableHands, defaultPracticeSelection, resolvePracticeSelection, referencesForGroup, referenceById, applyReferenceMetadata, safeReference, sampleReference, get attempt(){return attempt;}, get reference(){return reference;} };
+window.__ductus={ scoreAttempt, resample, dtw, directionScore, pressureScore, pressureProfileFor, pressureExpectationFor, pressureWidthFor, rhythmScore, matchStrokes, diagnosticsFor, environmentSnapshot, settingsSnapshot, exportAttemptPayload, availableReferences, availableHands, defaultPracticeSelection, resolvePracticeSelection, referencesForGroup, practiceGuidanceFor, referenceById, applyReferenceMetadata, safeReference, sampleReference, get attempt(){return attempt;}, get reference(){return reference;} };
 </script>

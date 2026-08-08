@@ -87,6 +87,7 @@ Done in first thin slice:
   - Hand
   - Group
   - Glyph
+- Practice guidance panel explains the purpose and cues for each starter glyph.
 - Old reference IDs and `referenceById(...)` compatibility preserved.
 - Attempt exports include:
   - `selectedHandId`
@@ -97,8 +98,7 @@ Done in first thin slice:
 Still planned for this phase:
 
 1. Add a small amount of real Kurrent Basic content beyond sample `n`.
-2. Add user-facing group notes / practice sequence hints.
-3. Update the authoring path so a reviewed custom reference can be assigned into a hand/group.
+2. Update the authoring path so a reviewed custom reference can be assigned into a hand/group.
 
 Original planned work:
 

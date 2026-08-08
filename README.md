@@ -25,6 +25,7 @@ Implemented now:
 - PWA manifest, service worker, and install icons
 - Mobile-responsive layout
 - Hand/group/glyph practice chooser with first hand: Kurrent Basic
+- Practice guidance panel that explains what to notice for each starter glyph
 - Four built-in references grouped as warm-ups and lowercase stems: Kurrent `n`, hairline, downstroke, compound curve
 - Stylus and mouse stroke capture
 - Pressure capture where the browser/device exposes it
@@ -85,15 +86,16 @@ Opening `index.html` directly from disk works for quick experiments, but service
 
 1. Open Ductus.
 2. Pick a hand, group, and glyph. The starter path is `Kurrent Basic → Warm-ups → Hairline`.
-3. Optionally enable `Show pressure` to draw reference and attempt strokes with pressure-based thickness.
-4. Draw the sample with a stylus or mouse.
-5. Click `Score`.
-6. Read the five bars separately.
-7. Use `Save attempt` to export a `.txt` file when sharing device-test data.
-8. Use `Clear` or `Undo` and try again.
-9. Switch to `Author` mode to draw a new reference.
-10. Click `Adopt attempt as reference`.
-11. Save the reference JSON if you want to keep it.
+3. Read the `What to practice` panel for the selected glyph.
+4. Optionally enable `Show pressure` to draw reference and attempt strokes with pressure-based thickness.
+5. Draw the sample with a stylus or mouse.
+6. Click `Score`.
+7. Read the five bars separately.
+8. Use `Save attempt` to export a `.txt` file when sharing device-test data.
+9. Use `Clear` or `Undo` and try again.
+10. Switch to `Author` mode to draw a new reference.
+11. Click `Adopt attempt as reference`.
+12. Save the reference JSON if you want to keep it.
 
 The bars are deliberately separate. A stroke can have the right shape but the wrong direction. It can be in the right place but written in the wrong order. One total score would hide that.
 
