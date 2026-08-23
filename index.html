@@ -77,7 +77,7 @@
         <div class="chooser-grid" aria-label="Practice chooser">
           <select id="handSelect" aria-label="Hand"><option value="kurrent-basic">Kurrent Basic</option></select>
           <select id="groupSelect" aria-label="Group"><option value="warmups">Warm-ups</option><option value="lowercase-stems">Lowercase stems</option></select>
-          <select id="glyphSelect" aria-label="Reference glyph"><option value="warmup-hairline">Hairline</option><option value="warmup-downstroke">Downstroke</option><option value="warmup-compound">Compound curve</option><option value="sample-n">Kurrent n · sample</option></select>
+          <select id="glyphSelect" aria-label="Reference glyph"><option value="warmup-hairline">Hairline</option><option value="warmup-downstroke">Downstroke</option><option value="warmup-compound">Compound curve</option><option value="sample-i">Kurrent i · starter</option><option value="sample-u">Kurrent u · starter</option><option value="sample-n">Kurrent n · sample</option><option value="sample-m">Kurrent m · starter</option></select>
         </div>
         <div class="row">
           <label class="file" title="Open reference JSON">Open ref<input id="openRef" type="file" accept="application/json,.json"></label>
@@ -137,23 +137,44 @@ let showPressure = false;
 const N = 64;
 const MIN_STROKE_POINTS = 3;
 
+function stemStroke(index, x, endX=x+150) {
+  return { index, hint:'Light entry, weighted stem, then release into the hairline.', points:[{x,y:700,p:.22,t:0},{x:x+60,y:430,p:.34,t:.45},{x:endX,y:700,p:.84,t:1}] };
+}
+function sampleIReference() {
+  return { script:'kurrent', glyph:'i', hand:'Kurrent Basic', tool:'stylus-authored starter', notes:'Starter lowercase stem reference derived from the Kurrent n movement recipe; needs real stylus calibration attempts before treating as authoritative.', canvas:{ width:1000, height:1000, baseline:700, xHeight:400 }, strokes:[
+    { index:0, hint:'Single entry stem: light upstroke, press into the downstroke, release at the baseline.', points:[{x:330,y:700,p:.22,t:0},{x:390,y:430,p:.34,t:.45},{x:515,y:700,p:.82,t:1}] }
+  ]};
+}
+function sampleUReference() {
+  return { script:'kurrent', glyph:'u', hand:'Kurrent Basic', tool:'stylus-authored starter', notes:'Starter lowercase stem pair for short practice sessions; validate with exported attempts before tuning scoring.', canvas:{ width:1000, height:1000, baseline:700, xHeight:400 }, strokes:[
+    stemStroke(0,240,410),
+    { index:1, hint:'Second stroke repeats the stem rhythm and finishes lightly.', points:[{x:410,y:700,p:.72,t:0},{x:485,y:430,p:.36,t:.48},{x:650,y:700,p:.22,t:1}] }
+  ]};
+}
 function sampleReference() {
-  return { script:'kurrent', glyph:'n', canvas:{ width:1000, height:1000, baseline:700, xHeight:400 }, strokes:[
+  return { script:'kurrent', glyph:'n', hand:'Kurrent Basic', tool:'stylus-authored starter', notes:'Original Kurrent n sample reference.', canvas:{ width:1000, height:1000, baseline:700, xHeight:400 }, strokes:[
     { index:0, hint:'Aufstrich dünn, erst im Abstrich Druck geben.', points:[{x:200,y:700,p:.2,t:0},{x:260,y:430,p:.3,t:.5},{x:430,y:700,p:.85,t:1}] },
     { index:1, hint:'Zweiter Bogen: Druck zurücknehmen und leicht auslaufen lassen.', points:[{x:430,y:700,p:.85,t:0},{x:500,y:430,p:.4,t:.5},{x:650,y:700,p:.2,t:1}] }
+  ]};
+}
+function sampleMReference() {
+  return { script:'kurrent', glyph:'m', hand:'Kurrent Basic', tool:'stylus-authored starter', notes:'Three-stem starter built from the existing Kurrent n movement vocabulary; preserve attempt exports when calibrating.', canvas:{ width:1000, height:1000, baseline:700, xHeight:400 }, strokes:[
+    stemStroke(0,150,315),
+    stemStroke(1,315,480),
+    { index:2, hint:'Third stem: keep the order clear and release into a lighter finish.', points:[{x:480,y:700,p:.78,t:0},{x:545,y:430,p:.38,t:.48},{x:720,y:700,p:.22,t:1}] }
   ]};
 }
 function warmupHairline(){ return { script:'warmup', glyph:'hairline', hand:'practice', tool:'stylus', notes:'Single light upstroke. Keep pressure low and even.', canvas:{width:1000,height:1000,baseline:760,xHeight:360}, strokes:[{index:0,hint:'Light pressure all the way up.',points:[{x:360,y:760,p:.18,t:0},{x:430,y:560,p:.16,t:.5},{x:500,y:360,p:.18,t:1}]}]}; }
 function warmupDownstroke(){ return { script:'warmup', glyph:'downstroke', hand:'practice', tool:'stylus', notes:'Single heavy downstroke. Keep direction and pressure steady.', canvas:{width:1000,height:1000,baseline:760,xHeight:360}, strokes:[{index:0,hint:'Start at x-height, press into the downstroke, release at the baseline.',points:[{x:500,y:360,p:.35,t:0},{x:500,y:560,p:.82,t:.5},{x:500,y:760,p:.72,t:1}]}]}; }
 function warmupCompound(){ return { script:'warmup', glyph:'compound-curve', hand:'practice', tool:'stylus', notes:'One compound curve with pressure swelling through the middle.', canvas:{width:1000,height:1000,baseline:760,xHeight:360}, strokes:[{index:0,hint:'Thin entry, heavier middle, lighter exit.',points:[{x:300,y:720,p:.22,t:0},{x:390,y:380,p:.38,t:.33},{x:560,y:720,p:.82,t:.66},{x:700,y:400,p:.28,t:1}]}]}; }
-function referenceFactories(){ return { 'sample-n':sampleReference, 'warmup-hairline':warmupHairline, 'warmup-downstroke':warmupDownstroke, 'warmup-compound':warmupCompound }; }
+function referenceFactories(){ return { 'sample-i':sampleIReference, 'sample-u':sampleUReference, 'sample-n':sampleReference, 'sample-m':sampleMReference, 'warmup-hairline':warmupHairline, 'warmup-downstroke':warmupDownstroke, 'warmup-compound':warmupCompound }; }
 function builtInHands(){ return [
   { id:'kurrent-basic', label:'Kurrent Basic', description:'Starter practice hand: warm-up pressure strokes before lowercase stems.', groups:[
     { id:'warmups', label:'Warm-ups', referenceIds:['warmup-hairline','warmup-downstroke','warmup-compound'] },
-    { id:'lowercase-stems', label:'Lowercase stems', referenceIds:['sample-n'] }
+    { id:'lowercase-stems', label:'Lowercase stems', referenceIds:['sample-i','sample-u','sample-n','sample-m'] }
   ] }
 ]; }
-function availableReferences(){ return [{id:'sample-n',label:'Kurrent n · sample'},{id:'warmup-hairline',label:'Warm-up · hairline'},{id:'warmup-downstroke',label:'Warm-up · downstroke'},{id:'warmup-compound',label:'Warm-up · compound curve'}]; }
+function availableReferences(){ return [{id:'sample-i',label:'Kurrent i · starter'},{id:'sample-u',label:'Kurrent u · starter'},{id:'sample-n',label:'Kurrent n · sample'},{id:'sample-m',label:'Kurrent m · starter'},{id:'warmup-hairline',label:'Warm-up · hairline'},{id:'warmup-downstroke',label:'Warm-up · downstroke'},{id:'warmup-compound',label:'Warm-up · compound curve'}]; }
 function availableHands(){ return builtInHands().map(hand=>({...hand, groups:hand.groups.map(group=>({...group, references:group.referenceIds.map(id=>availableReferences().find(ref=>ref.id===id)).filter(Boolean)}))})); }
 function defaultPracticeSelection(){ const hand=availableHands()[0]; const group=hand.groups[0]; return { handId:hand.id, groupId:group.id, referenceId:group.referenceIds[0] }; }
 function resolvePracticeSelection(handId, groupId, referenceId){ const fallback=defaultPracticeSelection(); const hand=availableHands().find(h=>h.id===handId) || availableHands()[0]; const group=hand.groups.find(g=>g.id===groupId) || hand.groups[0]; const wanted=group.referenceIds.includes(referenceId) ? referenceId : group.referenceIds[0]; return { handId:hand.id, groupId:group.id, referenceId:wanted || fallback.referenceId }; }
@@ -164,7 +185,10 @@ function practiceGuidanceFor(handId, groupId, referenceId){
     'warmup-hairline': { title:'Hairline warm-up', body:'Practice a light, even upstroke. This teaches the pen to move upward without squeezing for a darker line.', cues:['Keep pressure low from start to finish.','Move in one confident upward stroke.','Judge pressure before judging beauty.'] },
     'warmup-downstroke': { title:'Downstroke warm-up', body:'Practice a firm, steady downstroke. This is the heavy movement that later gives stems their weight.', cues:['Press into the stroke, then release near the baseline.','Keep the path vertical before tuning speed.','Do not turn this into a hairline.'] },
     'warmup-compound': { title:'Compound curve warm-up', body:'Practice the pressure pattern thin → thick → thin. The shape matters, but the pressure swell is the lesson.', cues:['Keep entry and exit lighter than the middle.','Let pressure grow once, then release once.','Avoid staying heavy throughout the curve.'] },
-    'sample-n': { title:'Kurrent n stem practice', body:'Practice how Kurrent n combines the warm-up movements: light entry, weighted stem, second stroke, then pressure release.', cues:['Follow the two-stroke order.','Watch stroke order before judging form.','Release pressure into the final hairline.'] }
+    'sample-i': { title:'Kurrent i entry stem', body:'Practice the entry stem as one compact movement: light upstroke, weighted descent, clean release at the baseline.', cues:['Use one stroke; do not rebuild it in pieces.','Keep pressure lighter at entry than at the stem.','Stop cleanly on the baseline before adding more letters.'] },
+    'sample-u': { title:'Kurrent u stem pair', body:'Practice two connected stems with a clear second stroke. It should feel like a short repeatable rhythm, not a traced outline.', cues:['Write the first stem before the second stroke.','Keep both stems close in height and weight.','Release the second stroke into a lighter finish.'] },
+    'sample-n': { title:'Kurrent n stem practice', body:'Practice how Kurrent n combines the warm-up movements: light entry, weighted stem, second stroke, then pressure release.', cues:['Follow the two-stroke order.','Watch stroke order before judging form.','Release pressure into the final hairline.'] },
+    'sample-m': { title:'Kurrent m stem sequence', body:'Practice three stem movements without losing rhythm. The lesson is the repeated stem order more than a pretty outline.', cues:['Keep the three-stroke order visible.','Repeat the same stem rhythm instead of drawing one long wave.','Let the final stroke release lighter than the middle.'] }
   };
   return guidance[sel.referenceId] || { title:'Practice reference', body:'Practice the selected glyph as a movement recipe, not as an outline to trace.', cues:['Follow stroke order.','Watch direction.','Compare pressure separately from form.'] };
 }

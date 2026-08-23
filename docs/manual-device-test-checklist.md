@@ -47,7 +47,7 @@ Nice to have later:
 2. Confirm the hand/group/glyph chooser opens at `Kurrent Basic → Warm-ups → Hairline`.
 3. Confirm `Show pressure` is visible and the `What to practice` panel describes a light, even upstroke.
 4. Switch to `Warm-ups → Downstroke` and confirm the guidance changes to firm pressure / release near the baseline.
-5. Switch to `Lowercase stems → Kurrent n · sample`, draw it with the stylus.
+5. Switch to `Lowercase stems → Kurrent i · starter`, then step through `u`, `n`, and `m`; draw at least one attempt for each with the stylus.
 6. Enable `Show pressure` and confirm the visible stroke thickness changes with pressure.
 7. Click `Score`.
 8. Confirm the five bars update and the score block is scrolled into view on mobile.
@@ -59,7 +59,7 @@ Nice to have later:
 Expected result:
 
 - Drawing works with pen or mouse.
-- The chooser exposes one hand (`Kurrent Basic`), two groups (`Warm-ups`, `Lowercase stems`), and keeps all existing built-in reference IDs available.
+- The chooser exposes one hand (`Kurrent Basic`), two groups (`Warm-ups`, `Lowercase stems`), warm-ups plus Kurrent `i`, `u`, `n`, and `m`, and keeps all existing built-in reference IDs available.
 - The `What to practice` guidance changes with the selected glyph and gives concrete pressure/order cues.
 - Finger input is ignored.
 - Scoring does not crash.

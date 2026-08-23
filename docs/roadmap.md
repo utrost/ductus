@@ -47,6 +47,7 @@ Done:
 - Rhythm diagnostics split in-stroke sampling gaps from inter-stroke pauses
 - Partial confidence labels for stroke-count mismatch cases
 - Plain-language pressure/count-mismatch feedback from real calibration attempts
+- Kurrent stem references `i`, `u`, `n`, and `m` now exist as a starter sequence under `lowercase-stems`; they are deliberately labelled starter references until real stylus attempts prove them.
 - First Android Firefox calibration batch preserved under `data/calibration/2026-08-05-firefox-android/`
 - Current device-testing findings documented
 - Dependency-free regression tests
@@ -82,7 +83,7 @@ Done in first thin slice:
 - Built-in `hands` registry with `kurrent-basic`.
 - First groups:
   - `warmups`: hairline, downstroke, compound curve
-  - `lowercase-stems`: Kurrent `n`
+  - `lowercase-stems`: Kurrent `i`, `u`, `n`, `m`
 - Three-level practice chooser:
   - Hand
   - Group
@@ -97,7 +98,7 @@ Done in first thin slice:
 
 Still planned for this phase:
 
-1. Add a small amount of real Kurrent Basic content beyond sample `n`.
+1. Replace the starter stem references with reviewed stylus-authored exports if the first practice session shows shape/pressure problems.
 2. Update the authoring path so a reviewed custom reference can be assigned into a hand/group.
 
 Original planned work:

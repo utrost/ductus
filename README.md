@@ -26,7 +26,7 @@ Implemented now:
 - Mobile-responsive layout
 - Hand/group/glyph practice chooser with first hand: Kurrent Basic
 - Practice guidance panel that explains what to notice for each starter glyph
-- Four built-in references grouped as warm-ups and lowercase stems: Kurrent `n`, hairline, downstroke, compound curve
+- Seven built-in references grouped as warm-ups and lowercase stems: hairline, downstroke, compound curve, plus Kurrent `i`, `u`, `n`, and `m` starter references
 - Stylus and mouse stroke capture
 - Pressure capture where the browser/device exposes it
 - Optional `Show pressure` view with pressure-based stroke thickness
@@ -85,7 +85,7 @@ Opening `index.html` directly from disk works for quick experiments, but service
 ## Basic use
 
 1. Open Ductus.
-2. Pick a hand, group, and glyph. The starter path is `Kurrent Basic → Warm-ups → Hairline`.
+2. Pick a hand, group, and glyph. The starter path is `Kurrent Basic → Warm-ups → Hairline`; the first letter sequence is `Kurrent Basic → Lowercase stems → i → u → n → m`.
 3. Read the `What to practice` panel for the selected glyph.
 4. Optionally enable `Show pressure` to draw reference and attempt strokes with pressure-based thickness.
 5. Draw the sample with a stylus or mouse.
