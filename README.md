@@ -26,6 +26,7 @@ Implemented now:
 - Mobile-responsive layout
 - Hand/group/glyph practice chooser with first hand: Kurrent Basic
 - Guided 10-minute Kurrent stem session: hairline, downstroke, compound curve, `i`, `u`, `n`, `m`
+- Local browser practice history with recent per-glyph attempts, score dimensions, clear control, and a simple weakest glyph/dimension summary
 - Visual mismatch markers after scoring for form/path, reversed direction, usable pressure problems, and stroke-count mismatches
 - Practice guidance panel that explains what to notice for each starter glyph
 - Seven built-in references grouped as warm-ups and lowercase stems: hairline, downstroke, compound curve, plus Kurrent `i`, `u`, `n`, and `m` starter references
@@ -52,7 +53,7 @@ Known limits:
 - Pressure behavior depends on browser, hardware, stylus, and grip; thresholds now use the first Android Firefox calibration batch but still need more devices.
 - The pressure view makes raw pressure visible; mismatch markers now flag pressure problems only when data is usable, but the visualization still needs richer per-segment explanation over time.
 - Authoring a good reference still needs judgement and a review step before adoption.
-- There is no local progress history yet.
+- Local progress history is intentionally browser-only localStorage for now; there is no sync, account, or migration layer yet.
 - Accessibility around the drawing surface needs work.
 
 ## Try it
@@ -91,13 +92,14 @@ Opening `index.html` directly from disk works for quick experiments, but service
 3. Read the `What to practice` panel for the selected glyph.
 4. Optionally enable `Show pressure` to draw reference and attempt strokes with pressure-based thickness.
 5. Draw the sample with a stylus or mouse.
-6. Click `Score`.
-7. Read the five bars separately.
+6. Click `Score`. The attempt is saved into local browser history for the selected glyph.
+7. Read the five bars separately and check `Local history` for recent attempts and the weakest glyph/dimension summary.
 8. Use `Save attempt` to export a `.txt` file when sharing device-test data.
 9. Use `Clear` or `Undo` and try again.
-10. Switch to `Author` mode to draw a new reference.
-11. Click `Adopt attempt as reference`.
-12. Save the reference JSON if you want to keep it.
+10. Use `Clear history` if you want to remove saved local practice history from this browser.
+11. Switch to `Author` mode to draw a new reference.
+12. Click `Adopt attempt as reference`.
+13. Save the reference JSON if you want to keep it.
 
 The bars are deliberately separate. A stroke can have the right shape but the wrong direction. It can be in the right place but written in the wrong order. One total score would hide that.
 

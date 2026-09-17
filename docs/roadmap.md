@@ -90,6 +90,7 @@ Done in first thin slice:
   - Glyph
 - Practice guidance panel explains the purpose and cues for each starter glyph.
 - Guided 10-minute Kurrent stem session walks through hairline, downstroke, compound curve, `i`, `u`, `n`, and `m` with progress, current/next step, retry, and continue controls.
+- Local browser history stores recent scored attempts per glyph, shows all five score dimensions, can be cleared, and summarizes the weakest glyph/dimension across saved attempts.
 - Visual mismatch markers identify form/path mismatches, reversed direction, usable pressure problems, and stroke-count mismatches after scoring.
 - Old reference IDs and `referenceById(...)` compatibility preserved.
 - Attempt exports include:

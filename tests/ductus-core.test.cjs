@@ -48,6 +48,10 @@ assert.match(html, /id="startSession"/);
 assert.match(html, /id="sessionProgress"/);
 assert.match(html, /id="retryStep"/);
 assert.match(html, /id="continueStep"/);
+assert.match(html, /id="practiceHistory"/);
+assert.match(html, /id="historyList"/);
+assert.match(html, /id="sessionSummary"/);
+assert.match(html, /id="clearHistory"/);
 assert.match(html, /scrollMarginBlockStart/);
 assert.match(html, /scoreIntoView/);
 assert.match(html, /padding-bottom:calc\(12px \+ env\(safe-area-inset-bottom\) \+ 76px\)/);
@@ -95,7 +99,9 @@ class MockElement {
 const elements = new Map();
 function element(id) { if (!elements.has(id)) elements.set(id, new MockElement(id === 'board' ? 'canvas' : 'div')); return elements.get(id); }
 const document = { getElementById: element, createElement: tag => new MockElement(tag), addEventListener: noop, removeEventListener: noop };
-const window = { devicePixelRatio: 2, addEventListener: noop, removeEventListener: noop, matchMedia: () => ({ matches: false }) };
+const localStorageData = new Map();
+const localStorage = { getItem: key => localStorageData.has(key) ? localStorageData.get(key) : null, setItem: (key, value) => localStorageData.set(key, String(value)), removeItem: key => localStorageData.delete(key) };
+const window = { devicePixelRatio: 2, addEventListener: noop, removeEventListener: noop, matchMedia: () => ({ matches: false }), localStorage };
 window.window = window; window.document = document;
 const navigator = {
   userAgent: 'TestBrowser/1.0 Firefox/140.0',
@@ -205,6 +211,30 @@ assert.equal(perfect.order.score, 100);
 assert.ok(perfect.form.score > 95);
 assert.ok(perfect.direction.score > 95);
 assert.ok(perfect.pressure.score > 95);
+const historyEntry = core.serializePracticeHistoryEntry({ referenceId: 'sample-n', ref: reference, strokes: same, score: perfect, now: '2026-09-17T10:00:00.000Z' });
+assert.equal(historyEntry.referenceId, 'sample-n');
+assert.equal(historyEntry.glyph, 'n');
+assert.equal(historyEntry.scoredAt, '2026-09-17T10:00:00.000Z');
+assert.equal(historyEntry.scores.form, perfect.form.score);
+assert.equal(historyEntry.scores.order, perfect.order.score);
+assert.equal(historyEntry.scores.direction, perfect.direction.score);
+assert.equal(historyEntry.scores.pressure, perfect.pressure.score);
+assert.equal(historyEntry.scores.rhythm, perfect.rhythm.score);
+assert.equal(historyEntry.diagnostics.strokeSummary, '2 valid attempt / 2 reference');
+const weakPressureEntry = { ...historyEntry, referenceId: 'warmup-hairline', glyph: 'hairline', scores: { form: 92, order: 100, direction: 98, pressure: 41, rhythm: 88 } };
+const weakOrderEntry = { ...historyEntry, referenceId: 'sample-u', glyph: 'u', scores: { form: 86, order: 35, direction: 90, pressure: 78, rhythm: 82 } };
+const summary = core.summarizePracticeHistory([historyEntry, weakPressureEntry, weakOrderEntry]);
+assert.equal(summary.count, 3);
+assert.equal(summary.weakestDimension, 'order');
+assert.equal(summary.weakestGlyph, 'u');
+assert.ok(summary.text.includes('3 attempts'));
+assert.ok(summary.text.includes('order'));
+core.savePracticeHistoryEntry(historyEntry);
+core.savePracticeHistoryEntry(weakPressureEntry);
+assert.equal(core.loadPracticeHistory().length, 2);
+assert.equal(core.recentHistoryFor('sample-n')[0].referenceId, 'sample-n');
+core.clearPracticeHistory();
+assert.equal(core.loadPracticeHistory().length, 0);
 
 element('pressureView').checked = true;
 element('handSelect').value = 'kurrent-basic';
