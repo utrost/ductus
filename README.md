@@ -25,17 +25,17 @@ Implemented now:
 - PWA manifest, service worker, and install icons
 - Mobile-responsive layout
 - Hand/group/glyph practice chooser with first hand: Kurrent Basic
-- Guided 10-minute Kurrent stem session: hairline, downstroke, compound curve, `i`, `u`, `n`, `m`
+- Guided Kurrent starter session: hairline, downstroke, compound curve, `i`, `u`, `n`, `m`, starter `e`, starter `r`, and first join drills
 - Local browser practice history with recent per-glyph attempts, score dimensions, clear control, and a simple weakest glyph/dimension summary
 - Visual mismatch markers after scoring for form/path, reversed direction, usable pressure problems, and stroke-count mismatches
-- Practice guidance panel that explains what to notice for each starter glyph
-- Seven built-in references grouped as warm-ups and lowercase stems: hairline, downstroke, compound curve, plus Kurrent `i`, `u`, `n`, and `m` starter references
+- Practice guidance panel that explains what to notice for each starter glyph/drill
+- Eleven built-in references grouped as warm-ups, lowercase stems, and joins: hairline, downstroke, compound curve, Kurrent `i`, `u`, `n`, `m`, starter `e`, starter `r`, and `i-u`/`n-m` join drills
 - Stylus and mouse stroke capture
 - Pressure capture where the browser/device exposes it
 - Pressure calibration check for light/heavy/curve samples, with full/reduced/disabled feedback mode
 - Optional `Show pressure` view with pressure-based stroke thickness
 - Practice mode with scoring
-- Author mode for turning an attempt into a reference
+- Author mode with a review/confirmation step before turning an attempt into a reference
 - Reference JSON load/save with hand/tool/notes metadata
 - Attempt `.txt` export for mobile sharing
 - Five scoring dimensions: form, order, direction, pressure, rhythm
@@ -50,10 +50,10 @@ Implemented now:
 
 Known limits:
 
-- The guided 10-minute Kurrent stem session uses the existing starter references and guidance; reference quality still needs real stylus exports before the hand can be treated as a trustworthy teacher.
+- The guided Kurrent starter session uses starter references and guidance; reference quality still needs real stylus exports before the hand can be treated as a trustworthy teacher.
 - Pressure behavior depends on browser, hardware, stylus, and grip; thresholds now use the first Android Firefox calibration batch but still need more devices.
 - The pressure view makes raw pressure visible; mismatch markers now flag pressure problems only when data is usable, but the visualization still needs richer per-segment explanation over time.
-- Authoring a good reference still needs judgement and a review step before adoption.
+- Authoring a good reference still needs judgement; the app now forces a review step before adoption, but it cannot decide historical quality for you.
 - Local progress history is intentionally browser-only localStorage for now; there is no sync, account, or migration layer yet.
 - Accessibility around the drawing surface needs work.
 
@@ -89,7 +89,7 @@ Opening `index.html` directly from disk works for quick experiments, but service
 ## Basic use
 
 1. Open Ductus.
-2. Pick a hand, group, and glyph. The starter path is `Kurrent Basic → Warm-ups → Hairline`; the first letter sequence is `Kurrent Basic → Lowercase stems → i → u → n → m`.
+2. Pick a hand, group, and glyph. The starter path is `Kurrent Basic → Warm-ups → Hairline`; the first letter sequence is `Kurrent Basic → Lowercase stems → i → u → n → m → e → r`, followed by `Joins` drills.
 3. Read the `What to practice` panel for the selected glyph.
 4. If pressure feedback matters on this device, run `Pressure calibration`: draw a deliberately light sample, a heavy sample, and a slow curve, saving each sample.
 5. Optionally enable `Show pressure` to draw reference and attempt strokes with pressure-based thickness.
@@ -100,8 +100,8 @@ Opening `index.html` directly from disk works for quick experiments, but service
 10. Use `Clear` or `Undo` and try again.
 11. Use `Clear history` if you want to remove saved local practice history from this browser.
 12. Switch to `Author` mode to draw a new reference.
-13. Click `Adopt attempt as reference`.
-14. Save the reference JSON if you want to keep it.
+13. Click `Review attempt as reference`, inspect the review facts, and choose the target hand/group/glyph.
+14. Click `Confirm reviewed adoption`, then save the reference JSON if you want to keep it.
 
 The bars are deliberately separate. A stroke can have the right shape but the wrong direction. It can be in the right place but written in the wrong order. One total score would hide that.
 

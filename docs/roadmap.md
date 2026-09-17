@@ -47,7 +47,7 @@ Done:
 - Rhythm diagnostics split in-stroke sampling gaps from inter-stroke pauses
 - Partial confidence labels for stroke-count mismatch cases
 - Plain-language pressure/count-mismatch feedback from real calibration attempts
-- Kurrent stem references `i`, `u`, `n`, and `m` now exist as a starter sequence under `lowercase-stems`; they are deliberately labelled starter references until real stylus attempts prove them.
+- Kurrent stem references `i`, `u`, `n`, `m`, starter `e`, starter `r`, and first `i-u`/`n-m` join drills now exist as a starter sequence; they are deliberately labelled starter references until real stylus attempts prove them.
 - First Android Firefox calibration batch preserved under `data/calibration/2026-08-05-firefox-android/`
 - Current device-testing findings documented
 - Dependency-free regression tests
@@ -58,8 +58,8 @@ Done:
 
 Remaining:
 
-- Add a review view before adopting an attempt as reference
-- Add per-stroke visual mismatch markers for form/pressure/rhythm
+- Replace starter references with reviewed real stylus exports where practice evidence shows problems
+- Add per-stroke visual mismatch markers for rhythm and richer pressure explanations
 - Keep collecting real-device attempts when a scoring change needs evidence
 
 Exit criterion:
@@ -83,16 +83,18 @@ Done in first thin slice:
 - Built-in `hands` registry with `kurrent-basic`.
 - First groups:
   - `warmups`: hairline, downstroke, compound curve
-  - `lowercase-stems`: Kurrent `i`, `u`, `n`, `m`
+  - `lowercase-stems`: Kurrent `i`, `u`, `n`, `m`, starter `e`, starter `r`
+  - `joins`: starter `i-u` and `n-m` join drills
 - Three-level practice chooser:
   - Hand
   - Group
   - Glyph
 - Practice guidance panel explains the purpose and cues for each starter glyph.
-- Guided 10-minute Kurrent stem session walks through hairline, downstroke, compound curve, `i`, `u`, `n`, and `m` with progress, current/next step, retry, and continue controls.
+- Guided Kurrent starter session walks through hairline, downstroke, compound curve, `i`, `u`, `n`, `m`, starter `e`, starter `r`, and two join drills with progress, current/next step, retry, and continue controls.
 - Local browser history stores recent scored attempts per glyph, shows all five score dimensions, can be cleared, and summarizes the weakest glyph/dimension across saved attempts.
 - Pressure calibration check classifies light/heavy/curve samples as missing, flat, narrow, or useful, and exposes full/reduced/disabled pressure feedback mode in scoring confidence and exports.
 - Visual mismatch markers identify form/path mismatches, reversed direction, usable pressure problems, and stroke-count mismatches after scoring.
+- Author mode opens a reference adoption review before replacing the current reference, shows candidate stroke/point/pressure/guide-line metadata, and lets the reviewed candidate be assigned to an existing hand/group/glyph before JSON save/load.
 - Old reference IDs and `referenceById(...)` compatibility preserved.
 - Attempt exports include:
   - `selectedHandId`
@@ -103,8 +105,8 @@ Done in first thin slice:
 
 Still planned for this phase:
 
-1. Replace the starter stem references with reviewed stylus-authored exports if the first practice session shows shape/pressure problems.
-2. Update the authoring path so a reviewed custom reference can be assigned into a hand/group.
+1. Replace the starter stem/join references with reviewed stylus-authored exports if real practice sessions show shape/pressure problems.
+2. Add more tiny words only after the starter joins are tested with exported attempts.
 
 Original planned work:
 
@@ -139,7 +141,7 @@ Exit criterion:
 
 Goal: create enough reference content that Ductus can support a short real practice session.
 
-Status: first guided stem session implemented with starter references; remaining work is reference/content quality, joins, and validation from real exported attempts.
+Status: expanded starter path implemented with starter references for `e`, `r`, and first joins; remaining work is reference/content quality and validation from real exported attempts.
 
 Planned glyph path:
 
@@ -153,11 +155,11 @@ Planned glyph path:
    - `n`
    - `m`
 3. First connectors / simple letters:
-   - `e`
-   - `r`
+   - `e` ✓ starter reference
+   - `r` ✓ starter reference
    - optionally `a` if the authoring quality is good enough
 4. Short practice fragments:
-   - two-letter joins
+   - two-letter joins ✓ starter `i-u` and `n-m` drills
    - three-letter fragments
    - tiny words made only from known glyphs
 
@@ -182,9 +184,9 @@ Planned work:
 - Make baseline and x-height editable in author mode
 - Show per-stroke hints while practicing
 - Add stroke numbering and direction arrows to the reference ghost ✓ initial markers exist
-- Add a review view before adopting an attempt as reference
+- Add a review view before adopting an attempt as reference ✓ initial confirmation panel exists
 - Add import/export examples under `examples/`
-- Let a reviewed authored reference be assigned to a hand/group
+- Let a reviewed authored reference be assigned to a hand/group ✓ assignment controls exist for built-in hand/group/glyph IDs
 
 Exit criterion:
 
