@@ -69,6 +69,9 @@
   .history-item { display:grid; grid-template-columns:1fr auto; gap:4px 8px; padding:7px 0; border-top:1px solid rgba(255,255,255,.08); }
   .history-item:first-child { border-top:0; }
   .history-scores { grid-column:1 / 3; color:var(--muted); font-size:11px; }
+  .review-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .review-grid .field { margin-top:0; }
+  .review-facts { display:grid; grid-template-columns:1fr auto; gap:4px 10px; margin-top:8px; }
   @media (max-width: 900px) { #app { grid-template-columns:1fr; grid-template-rows:minmax(0,1fr) auto; } #side { max-height:46vh; border-left:0; border-top:1px solid rgba(255,255,255,.08); } }
   @media (max-width: 720px) { html, body { height:100dvh; } #app { height:100dvh; } #side { padding:10px; padding-bottom:calc(12px + env(safe-area-inset-bottom) + 76px); gap:8px; max-height:50vh; scroll-padding-bottom:calc(12px + env(safe-area-inset-bottom) + 76px); } h1 { font-size:19px; } button,label.file,select { min-height:44px; padding:9px 10px; } .card { padding:10px; border-radius:12px; } .metric { grid-template-columns:72px 1fr 36px; margin:6px 0; } #metrics { scroll-margin-block-start:10px; } #referencePanel textarea { min-height:72px; max-height:140px; } }
 </style>
@@ -85,8 +88,8 @@
       <div class="practice-chooser">
         <div class="chooser-grid" aria-label="Practice chooser">
           <select id="handSelect" aria-label="Hand"><option value="kurrent-basic">Kurrent Basic</option></select>
-          <select id="groupSelect" aria-label="Group"><option value="warmups">Warm-ups</option><option value="lowercase-stems">Lowercase stems</option></select>
-          <select id="glyphSelect" aria-label="Reference glyph"><option value="warmup-hairline">Hairline</option><option value="warmup-downstroke">Downstroke</option><option value="warmup-compound">Compound curve</option><option value="sample-i">Kurrent i · starter</option><option value="sample-u">Kurrent u · starter</option><option value="sample-n">Kurrent n · sample</option><option value="sample-m">Kurrent m · starter</option></select>
+          <select id="groupSelect" aria-label="Group"><option value="warmups">Warm-ups</option><option value="lowercase-stems">Lowercase stems</option><option value="joins">Joins</option></select>
+          <select id="glyphSelect" aria-label="Reference glyph"><option value="warmup-hairline">Hairline</option><option value="warmup-downstroke">Downstroke</option><option value="warmup-compound">Compound curve</option><option value="sample-i">Kurrent i · starter</option><option value="sample-u">Kurrent u · starter</option><option value="sample-n">Kurrent n · sample</option><option value="sample-m">Kurrent m · starter</option><option value="sample-e">Kurrent e · starter</option><option value="sample-r">Kurrent r · starter</option><option value="join-iu">Join i-u · starter</option></select>
         </div>
         <div class="row">
           <label class="file" title="Open reference JSON">Open ref<input id="openRef" type="file" accept="application/json,.json"></label>
@@ -116,7 +119,7 @@
     </section>
     <section id="guidedSession" class="card small session-panel" aria-label="Guided Kurrent practice session">
       <div class="session-head"><b>10-minute Kurrent session</b><span id="sessionProgress" class="session-progress">Not started</span></div>
-      <div id="sessionCurrent" class="session-title">Start with hairline → downstroke → compound curve → i → u → n → m.</div>
+      <div id="sessionCurrent" class="session-title">Start with hairline → downstroke → compound curve → i → u → n → m → e → r → joins.</div>
       <div id="sessionNext" class="session-next">Each step keeps the normal guidance and scoring.</div>
       <div id="sessionAction">Score an attempt, then retry or continue.</div>
       <div class="row"><button id="startSession" class="primary" aria-label="Start guided Kurrent session">Start session</button><button id="retryStep" class="ghost" aria-label="Retry current guided session step">Retry step</button><button id="continueStep" class="ghost" aria-label="Continue to next guided session step">Continue</button></div>
@@ -146,8 +149,19 @@
         Device testing notes: <a class="textlink" href="./docs/manual-device-test-checklist.md">manual checklist</a>.
       </details>
     </section>
-    <section class="card small"><b>Author mode</b><br>In Author mode, your current strokes replace the reference strokes when you click “Adopt attempt as reference”. Pressure and order are preserved.</section>
-    <div class="row"><button id="adopt" aria-label="Adopt current attempt as reference">Adopt attempt as reference</button></div>
+    <section class="card small"><b>Author mode</b><br>In Author mode, your current strokes open a review step before they replace a teaching reference. Check order, direction, pressure, guide lines, and metadata before confirming.</section>
+    <section id="adoptionReview" class="card small" aria-label="Reference adoption review" hidden>
+      <div class="session-head"><b>Review candidate reference</b><span id="reviewStatus" class="session-progress">Not reviewed</span></div>
+      <div id="reviewSummary" class="session-next">Draw an attempt, then prepare a review.</div>
+      <div id="reviewFacts" class="review-facts"></div>
+      <div class="review-grid">
+        <label class="field"><span>Hand</span><select id="reviewReferenceHand" aria-label="Review hand"></select></label>
+        <label class="field"><span>Group</span><select id="reviewReferenceGroup" aria-label="Review group"></select></label>
+      </div>
+      <label class="field"><span>Assign to glyph/drill</span><select id="reviewReferenceGlyph" aria-label="Review reference glyph"></select></label>
+      <div class="row" style="margin-top:8px"><button id="confirmAdopt" class="primary" aria-label="Confirm reviewed reference adoption">Confirm reviewed adoption</button><button id="cancelAdopt" class="ghost" aria-label="Cancel reference adoption review">Cancel review</button></div>
+    </section>
+    <div class="row"><button id="adopt" aria-label="Prepare review for current attempt as reference">Review attempt as reference</button></div>
   </aside>
 </div>
 <script>
@@ -163,6 +177,7 @@ let lastPointerType = 'none';
 let showPressure = false;
 let guidedSession = { active:false, index:0, lastScore:null };
 let lastMarkers = [];
+let pendingAdoptionReview = null;
 const N = 64;
 const MIN_STROKE_POINTS = 3;
 const PRACTICE_HISTORY_KEY = 'ductus.practiceHistory.v1';
@@ -196,23 +211,48 @@ function sampleMReference() {
     { index:2, hint:'Third stem: keep the order clear and release into a lighter finish.', points:[{x:480,y:700,p:.78,t:0},{x:545,y:430,p:.38,t:.48},{x:720,y:700,p:.22,t:1}] }
   ]};
 }
+function sampleEReference() {
+  return { script:'kurrent', glyph:'e', hand:'Kurrent Basic', tool:'stylus-authored starter', notes:'Starter lowercase e candidate for practice only: a compact loop built from the same stem rhythm, not a definitive historical model.', canvas:{ width:1000, height:1000, baseline:700, xHeight:400 }, strokes:[
+    { index:0, hint:'Small loop: enter lightly, make a compact counter, then finish with a light exit.', points:[{x:310,y:700,p:.22,t:0},{x:385,y:520,p:.34,t:.25},{x:470,y:455,p:.42,t:.5},{x:535,y:560,p:.36,t:.75},{x:610,y:700,p:.24,t:1}] }
+  ]};
+}
+function sampleRReference() {
+  return { script:'kurrent', glyph:'r', hand:'Kurrent Basic', tool:'stylus-authored starter', notes:'Starter lowercase r candidate: stem plus shoulder, included to extend the practice path before real stylus review.', canvas:{ width:1000, height:1000, baseline:700, xHeight:400 }, strokes:[
+    stemStroke(0,260,420),
+    { index:1, hint:'Second stroke forms the shoulder: start firm, curve right, and release lighter.', points:[{x:420,y:700,p:.72,t:0},{x:455,y:470,p:.58,t:.35},{x:555,y:485,p:.42,t:.68},{x:635,y:700,p:.24,t:1}] }
+  ]};
+}
+function joinIUReference() {
+  return { script:'kurrent', glyph:'iu', hand:'Kurrent Basic', tool:'stylus-authored starter', notes:'Starter two-letter join drill: practice i flowing into u while keeping individual stem order visible.', canvas:{ width:1000, height:1000, baseline:700, xHeight:400 }, strokes:[
+    { index:0, hint:'Write the i entry stem and let the exit point prepare the join.', points:[{x:180,y:700,p:.22,t:0},{x:235,y:430,p:.34,t:.45},{x:350,y:700,p:.78,t:1}] },
+    { index:1, hint:'Join into u with a light connector before the next weighted stem.', points:[{x:350,y:700,p:.28,t:0},{x:425,y:455,p:.36,t:.45},{x:560,y:700,p:.78,t:1}] },
+    { index:2, hint:'Finish the u with a lighter release so the join does not become one heavy wave.', points:[{x:560,y:700,p:.72,t:0},{x:625,y:455,p:.36,t:.48},{x:760,y:700,p:.22,t:1}] }
+  ]};
+}
+function joinNMReference() {
+  return { script:'kurrent', glyph:'nm', hand:'Kurrent Basic', tool:'stylus-authored starter', notes:'Starter n-m join drill: maintain readable stem count while moving through a tiny fragment.', canvas:{ width:1000, height:1000, baseline:700, xHeight:400 }, strokes:[
+    stemStroke(0,120,275), stemStroke(1,275,430), stemStroke(2,430,585),
+    { index:3, hint:'Final joined stem: repeat the rhythm and release lightly at the baseline.', points:[{x:585,y:700,p:.76,t:0},{x:650,y:430,p:.38,t:.48},{x:805,y:700,p:.22,t:1}] }
+  ]};
+}
 function warmupHairline(){ return { script:'warmup', glyph:'hairline', hand:'practice', tool:'stylus', notes:'Single light upstroke. Keep pressure low and even.', canvas:{width:1000,height:1000,baseline:760,xHeight:360}, strokes:[{index:0,hint:'Light pressure all the way up.',points:[{x:360,y:760,p:.18,t:0},{x:430,y:560,p:.16,t:.5},{x:500,y:360,p:.18,t:1}]}]}; }
 function warmupDownstroke(){ return { script:'warmup', glyph:'downstroke', hand:'practice', tool:'stylus', notes:'Single heavy downstroke. Keep direction and pressure steady.', canvas:{width:1000,height:1000,baseline:760,xHeight:360}, strokes:[{index:0,hint:'Start at x-height, press into the downstroke, release at the baseline.',points:[{x:500,y:360,p:.35,t:0},{x:500,y:560,p:.82,t:.5},{x:500,y:760,p:.72,t:1}]}]}; }
 function warmupCompound(){ return { script:'warmup', glyph:'compound-curve', hand:'practice', tool:'stylus', notes:'One compound curve with pressure swelling through the middle.', canvas:{width:1000,height:1000,baseline:760,xHeight:360}, strokes:[{index:0,hint:'Thin entry, heavier middle, lighter exit.',points:[{x:300,y:720,p:.22,t:0},{x:390,y:380,p:.38,t:.33},{x:560,y:720,p:.82,t:.66},{x:700,y:400,p:.28,t:1}]}]}; }
-function referenceFactories(){ return { 'sample-i':sampleIReference, 'sample-u':sampleUReference, 'sample-n':sampleReference, 'sample-m':sampleMReference, 'warmup-hairline':warmupHairline, 'warmup-downstroke':warmupDownstroke, 'warmup-compound':warmupCompound }; }
+function referenceFactories(){ return { 'sample-i':sampleIReference, 'sample-u':sampleUReference, 'sample-n':sampleReference, 'sample-m':sampleMReference, 'sample-e':sampleEReference, 'sample-r':sampleRReference, 'join-iu':joinIUReference, 'join-nm':joinNMReference, 'warmup-hairline':warmupHairline, 'warmup-downstroke':warmupDownstroke, 'warmup-compound':warmupCompound }; }
 function builtInHands(){ return [
   { id:'kurrent-basic', label:'Kurrent Basic', description:'Starter practice hand: warm-up pressure strokes before lowercase stems.', groups:[
     { id:'warmups', label:'Warm-ups', referenceIds:['warmup-hairline','warmup-downstroke','warmup-compound'] },
-    { id:'lowercase-stems', label:'Lowercase stems', referenceIds:['sample-i','sample-u','sample-n','sample-m'] }
+    { id:'lowercase-stems', label:'Lowercase stems', referenceIds:['sample-i','sample-u','sample-n','sample-m','sample-e','sample-r'] },
+    { id:'joins', label:'Joins and tiny fragments', referenceIds:['join-iu','join-nm'] }
   ] }
 ]; }
-function availableReferences(){ return [{id:'sample-i',label:'Kurrent i · starter'},{id:'sample-u',label:'Kurrent u · starter'},{id:'sample-n',label:'Kurrent n · sample'},{id:'sample-m',label:'Kurrent m · starter'},{id:'warmup-hairline',label:'Warm-up · Hairline'},{id:'warmup-downstroke',label:'Warm-up · Downstroke'},{id:'warmup-compound',label:'Warm-up · Compound curve'}]; }
+function availableReferences(){ return [{id:'sample-i',label:'Kurrent i · starter'},{id:'sample-u',label:'Kurrent u · starter'},{id:'sample-n',label:'Kurrent n · sample'},{id:'sample-m',label:'Kurrent m · starter'},{id:'sample-e',label:'Kurrent e · starter'},{id:'sample-r',label:'Kurrent r · starter'},{id:'join-iu',label:'Join i-u · starter'},{id:'join-nm',label:'Join n-m · starter'},{id:'warmup-hairline',label:'Warm-up · Hairline'},{id:'warmup-downstroke',label:'Warm-up · Downstroke'},{id:'warmup-compound',label:'Warm-up · Compound curve'}]; }
 function availableHands(){ return builtInHands().map(hand=>({...hand, groups:hand.groups.map(group=>({...group, references:group.referenceIds.map(id=>availableReferences().find(ref=>ref.id===id)).filter(Boolean)}))})); }
 function defaultPracticeSelection(){ const hand=availableHands()[0]; const group=hand.groups[0]; return { handId:hand.id, groupId:group.id, referenceId:group.referenceIds[0] }; }
 function resolvePracticeSelection(handId, groupId, referenceId){ const fallback=defaultPracticeSelection(); const hand=availableHands().find(h=>h.id===handId) || availableHands()[0]; const group=hand.groups.find(g=>g.id===groupId) || hand.groups[0]; const wanted=group.referenceIds.includes(referenceId) ? referenceId : group.referenceIds[0]; return { handId:hand.id, groupId:group.id, referenceId:wanted || fallback.referenceId }; }
 function selectionForReference(referenceId){ for(const hand of availableHands()) for(const group of hand.groups) if(group.referenceIds.includes(referenceId)) return {handId:hand.id, groupId:group.id, referenceId}; return defaultPracticeSelection(); }
 function labelForReference(referenceId){ return (availableReferences().find(ref=>ref.id===referenceId)||{label:referenceId}).label; }
-function guidedSessionSequence(){ return ['warmup-hairline','warmup-downstroke','warmup-compound','sample-i','sample-u','sample-n','sample-m'].map((referenceId,index)=>({...selectionForReference(referenceId), referenceId, label:labelForReference(referenceId), index})); }
+function guidedSessionSequence(){ return ['warmup-hairline','warmup-downstroke','warmup-compound','sample-i','sample-u','sample-n','sample-m','sample-e','sample-r','join-iu','join-nm'].map((referenceId,index)=>({...selectionForReference(referenceId), referenceId, label:labelForReference(referenceId), index})); }
 function guidedSessionState(index=guidedSession.index){ const sequence=guidedSessionSequence(); const safeIndex=clamp(index,0,sequence.length-1); const currentStep=sequence[safeIndex]; const nextStep=sequence[safeIndex+1] || null; return { active:guidedSession.active, handId:'kurrent-basic', index:safeIndex, total:sequence.length, currentStep, nextStep, progressLabel:`Step ${safeIndex+1} of ${sequence.length}`, complete:safeIndex>=sequence.length-1 }; }
 function defaultGuidedSession(){ return guidedSessionState(0); }
 function referencesForGroup(handId, groupId){ const sel=resolvePracticeSelection(handId, groupId, ''); const hand=availableHands().find(h=>h.id===sel.handId); const group=hand.groups.find(g=>g.id===sel.groupId); return group.referenceIds.map(id=>availableReferences().find(ref=>ref.id===id)).filter(Boolean); }
@@ -225,7 +265,11 @@ function practiceGuidanceFor(handId, groupId, referenceId){
     'sample-i': { title:'Kurrent i entry stem', body:'Practice the entry stem as one compact movement: light upstroke, weighted descent, clean release at the baseline.', cues:['Use one stroke; do not rebuild it in pieces.','Keep pressure lighter at entry than at the stem.','Stop cleanly on the baseline before adding more letters.'] },
     'sample-u': { title:'Kurrent u stem pair', body:'Practice two connected stems with a clear second stroke. It should feel like a short repeatable rhythm, not a traced outline.', cues:['Write the first stem before the second stroke.','Keep both stems close in height and weight.','Release the second stroke into a lighter finish.'] },
     'sample-n': { title:'Kurrent n stem practice', body:'Practice how Kurrent n combines the warm-up movements: light entry, weighted stem, second stroke, then pressure release.', cues:['Follow the two-stroke order.','Watch stroke order before judging form.','Release pressure into the final hairline.'] },
-    'sample-m': { title:'Kurrent m stem sequence', body:'Practice three stem movements without losing rhythm. The lesson is the repeated stem order more than a pretty outline.', cues:['Keep the three-stroke order visible.','Repeat the same stem rhythm instead of drawing one long wave.','Let the final stroke release lighter than the middle.'] }
+    'sample-m': { title:'Kurrent m stem sequence', body:'Practice three stem movements without losing rhythm. The lesson is the repeated stem order more than a pretty outline.', cues:['Keep the three-stroke order visible.','Repeat the same stem rhythm instead of drawing one long wave.','Let the final stroke release lighter than the middle.'] },
+    'sample-e': { title:'Kurrent e starter loop', body:'Practice a small loop with a visible counter, then release into the baseline. Treat this as a starter drill, not an authoritative alphabet model.', cues:['Keep the counter small and open enough to review.','Enter lightly before the loop grows.','Do not turn the loop into a round printed e.'] },
+    'sample-r': { title:'Kurrent r stem and shoulder', body:'Practice the first stem, then add the shoulder as a separate second stroke with a lighter release.', cues:['Keep the stem rhythm from n and m.','Start the second stroke clearly; do not hide it in the first stem.','Release the shoulder before it becomes another full stem.'] },
+    'join-iu': { title:'i-u join drill', body:'Practice a tiny join from i into u while keeping the separate strokes readable.', cues:['Let the i finish prepare the connector.','Keep the join light; do not smear it into one wave.','Count strokes before judging the final shape.'] },
+    'join-nm': { title:'n-m join drill', body:'Practice a short n-m fragment with repeated stem rhythm and a visible join.', cues:['Keep each stem countable.','Use the same pressure release on each exit.','Slow down if the joined fragment turns into a long snake.'] }
   };
   return guidance[sel.referenceId] || { title:'Practice reference', body:'Practice the selected glyph as a movement recipe, not as an outline to trace.', cues:['Follow stroke order.','Watch direction.','Compare pressure separately from form.'] };
 }
@@ -338,6 +382,48 @@ function clamp(v,min,max){ return Math.min(max,Math.max(min,Number.isFinite(Numb
 function safeReference(obj){ if(!obj || !Array.isArray(obj.strokes)) throw new Error('Reference needs strokes[]'); const canvas=obj.canvas||{}; return { script:String(obj.script||'custom').slice(0,80), glyph:String(obj.glyph||'?').slice(0,20), hand:String(obj.hand||'').slice(0,120), tool:String(obj.tool||'').slice(0,120), notes:String(obj.notes||'').slice(0,1000), canvas:{ width:clamp(canvas.width,1000,100,10000), height:clamp(canvas.height,1000,100,10000), baseline:clamp(canvas.baseline,700,0,10000), xHeight:clamp(canvas.xHeight,400,0,10000) }, strokes:obj.strokes.map((s,i)=>({ index:i, hint:String(s.hint||'').slice(0,240), points:(Array.isArray(s.points)?s.points:[]).flatMap(p=>{ const x=Number(p&&p.x), y=Number(p&&p.y); if(!Number.isFinite(x)||!Number.isFinite(y)) return []; return [{x,y,p:clamp(p.p,.5,0,1),t:clamp(p.t,0,0,Number.MAX_SAFE_INTEGER)}]; }) })).filter(s=>s.points.length) }; }
 function applyReferenceMetadata(ref, meta){ return {...ref, hand:String(meta.hand||'').slice(0,120), tool:String(meta.tool||'').slice(0,120), notes:String(meta.notes||'').slice(0,1000)}; }
 function currentReferenceWithMetadata(){ return applyReferenceMetadata(reference,{hand:document.getElementById('metaHand').value, tool:document.getElementById('metaTool').value, notes:document.getElementById('metaNotes').value}); }
+
+function assignmentReferenceMeta(assignment){ const refInfo=availableReferences().find(ref=>ref.id===assignment.referenceId)||{}; const ref=referenceById(assignment.referenceId); return { label:refInfo.label||assignment.referenceId, script:ref.script||'custom', glyph:ref.glyph||assignment.referenceId }; }
+function prepareAdoptionReview({strokes=attempt, assignment=null, metadata=null}={}){
+  const sel=assignment ? resolvePracticeSelection(assignment.handId, assignment.groupId, assignment.referenceId) : resolvePracticeSelection(document.getElementById('handSelect')?.value, document.getElementById('groupSelect')?.value, document.getElementById('glyphSelect')?.value);
+  const valid=validStrokes(strokes).map((s,i)=>({index:i, hint:s.hint||'', points:(s.points||[]).map(p=>({...p}))}));
+  if(!valid.length) throw new Error('Draw an attempt first.');
+  const meta=metadata || { hand:document.getElementById('metaHand')?.value || reference.hand || '', tool:document.getElementById('metaTool')?.value || reference.tool || '', notes:document.getElementById('metaNotes')?.value || reference.notes || '' };
+  const points=valid.flatMap(s=>s.points||[]);
+  const pressureProfile=pressureProfileFor(valid);
+  const target=assignmentReferenceMeta(sel);
+  return { assignment:sel, metadata:{ hand:String(meta.hand||'').slice(0,120), tool:String(meta.tool||'').slice(0,120), notes:String(meta.notes||'').slice(0,1000) }, strokeCount:valid.length, pointCount:points.length, pressureProfile, diagnostics:diagnosticsFor(reference,valid), strokes:valid, summary:`Review ${valid.length} strokes / ${points.length} points for ${sel.referenceId} (${target.label}). Pressure ${pressureProfile.levelLabel} · ${pressureProfile.variationLabel}.` };
+}
+function referenceFromAdoptionReview(review){
+  const target=assignmentReferenceMeta(review.assignment||defaultPracticeSelection());
+  const base=referenceById(review.assignment?.referenceId || defaultPracticeSelection().referenceId);
+  return { ...base, script:target.script, glyph:target.glyph, hand:review.metadata?.hand || base.hand || '', tool:review.metadata?.tool || base.tool || '', notes:review.metadata?.notes || base.notes || '', strokes:(review.strokes||[]).map((s,i)=>({ index:i, hint:`Reviewed candidate stroke ${i+1} for ${target.label}.`, points:(s.points||[]).map((p,j)=>({...p,t:s.points.length>1?j/(s.points.length-1):0})) })) };
+}
+function populateReviewChooser(assignment=resolvePracticeSelection(document.getElementById('handSelect')?.value, document.getElementById('groupSelect')?.value, document.getElementById('glyphSelect')?.value)){
+  const handSelect=document.getElementById('reviewReferenceHand'), groupSelect=document.getElementById('reviewReferenceGroup'), glyphSelect=document.getElementById('reviewReferenceGlyph');
+  if(!handSelect||!groupSelect||!glyphSelect) return assignment;
+  const sel=resolvePracticeSelection(assignment.handId, assignment.groupId, assignment.referenceId);
+  const hands=availableHands();
+  handSelect.innerHTML=hands.map(hand=>optionHtml(hand.id,hand.label)).join(''); handSelect.value=sel.handId;
+  const hand=hands.find(h=>h.id===sel.handId)||hands[0];
+  groupSelect.innerHTML=hand.groups.map(group=>optionHtml(group.id,group.label)).join(''); groupSelect.value=sel.groupId;
+  const refs=referencesForGroup(sel.handId,sel.groupId);
+  glyphSelect.innerHTML=refs.map(ref=>optionHtml(ref.id,ref.label)).join(''); glyphSelect.value=sel.referenceId;
+  return sel;
+}
+function renderAdoptionReview(review=pendingAdoptionReview){
+  const panel=document.getElementById('adoptionReview'); if(!panel) return review;
+  panel.hidden=!review;
+  if(!review) return review;
+  populateReviewChooser(review.assignment);
+  document.getElementById('reviewStatus').textContent='Needs confirmation';
+  document.getElementById('reviewSummary').textContent=review.summary;
+  const facts=document.getElementById('reviewFacts');
+  if(facts) facts.innerHTML=`<div>Strokes</div><div>${review.strokeCount}</div><div>Points</div><div>${review.pointCount}</div><div>Pressure</div><div>${review.pressureProfile.levelLabel} · ${review.pressureProfile.variationLabel}</div><div>Guide</div><div>Baseline ${reference.canvas.baseline}, x-height ${reference.canvas.xHeight}</div>`;
+  return review;
+}
+function openAdoptionReview(){ pendingAdoptionReview=prepareAdoptionReview(); renderAdoptionReview(); render(); toast('Review candidate before adopting'); return pendingAdoptionReview; }
+function confirmAdoptionReview(){ if(!pendingAdoptionReview) return null; const assignment=resolvePracticeSelection(document.getElementById('reviewReferenceHand')?.value, document.getElementById('reviewReferenceGroup')?.value, document.getElementById('reviewReferenceGlyph')?.value); pendingAdoptionReview=prepareAdoptionReview({ strokes:pendingAdoptionReview.strokes, assignment, metadata:pendingAdoptionReview.metadata }); reference=referenceFromAdoptionReview(pendingAdoptionReview); attempt=[]; pendingAdoptionReview=null; updateMetadataFields(); updateRefText(); renderAdoptionReview(null); render(); toast('Reviewed reference adopted'); return reference; }
 
 function updateMetadataFields(){ document.getElementById('metaHand').value=reference.hand||''; document.getElementById('metaTool').value=reference.tool||''; document.getElementById('metaNotes').value=reference.notes||''; }
 function updateRefText(){ document.getElementById('refText').value=JSON.stringify(currentReferenceWithMetadata(),null,2); }
@@ -454,7 +540,7 @@ function renderGuidedSession(){
   const action=document.getElementById('sessionAction');
   if(!progress || !currentBox || !nextBox || !action) return state;
   progress.textContent=state.active ? state.progressLabel : 'Not started';
-  currentBox.textContent=state.active ? `Current: ${state.currentStep.label}` : 'Start with hairline → downstroke → compound curve → i → u → n → m.';
+  currentBox.textContent=state.active ? `Current: ${state.currentStep.label}` : 'Start with hairline → downstroke → compound curve → i → u → n → m → e → r → joins.';
   nextBox.textContent=state.active ? (state.nextStep ? `Next: ${state.nextStep.label}` : 'Final step. Save/export if this is useful evidence.') : 'Each step keeps the normal guidance and scoring.';
   action.textContent=guidedSession.lastScore ? (state.nextStep ? 'Scored. Retry this step or continue to the next one.' : 'Scored final step. Retry, save the attempt, or start again.') : 'Score an attempt, then retry or continue.';
   return state;
@@ -524,12 +610,17 @@ function wire(){
     recordGuidedSessionScore(result);
     scoreIntoView();
   };
-  document.getElementById('adopt').onclick=()=>{ if(!attempt.length){ alert('Draw an attempt first.'); return; } reference={...currentReferenceWithMetadata(), strokes:validStrokes(attempt).map((s,i)=>({index:i,hint:'',points:s.points.map((p,j)=>({...p,t:s.points.length>1?j/(s.points.length-1):0}))}))}; attempt=[]; updateMetadataFields(); updateRefText(); render(); toast('Attempt adopted as reference'); };
+  document.getElementById('adopt').onclick=()=>{ try{ openAdoptionReview(); } catch(e){ alert(e.message); } };
+  document.getElementById('confirmAdopt').onclick=()=>confirmAdoptionReview();
+  document.getElementById('cancelAdopt').onclick=()=>{ pendingAdoptionReview=null; renderAdoptionReview(null); toast('Review cancelled'); };
+  document.getElementById('reviewReferenceHand').onchange=e=>{ const sel=populateReviewChooser({handId:e.target.value,groupId:'',referenceId:''}); if(pendingAdoptionReview){ pendingAdoptionReview.assignment=sel; renderAdoptionReview(pendingAdoptionReview); } };
+  document.getElementById('reviewReferenceGroup').onchange=e=>{ const sel=populateReviewChooser({handId:document.getElementById('reviewReferenceHand').value,groupId:e.target.value,referenceId:''}); if(pendingAdoptionReview){ pendingAdoptionReview.assignment=sel; renderAdoptionReview(pendingAdoptionReview); } };
+  document.getElementById('reviewReferenceGlyph').onchange=e=>{ if(pendingAdoptionReview){ pendingAdoptionReview.assignment=resolvePracticeSelection(document.getElementById('reviewReferenceHand').value,document.getElementById('reviewReferenceGroup').value,e.target.value); renderAdoptionReview(pendingAdoptionReview); } };
   document.getElementById('openRef').onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ document.getElementById('refText').value=fr.result; loadRefFromText(); }; fr.readAsText(f); };
   ['metaHand','metaTool','metaNotes'].forEach(id=>document.getElementById(id).addEventListener('input',updateRefText));
 }
 function setMode(next){ mode=next; document.getElementById('practiceTab').classList.toggle('active',mode==='practice'); document.getElementById('authorTab').classList.toggle('active',mode==='author'); toast(mode==='author'?'Author mode':'Practice mode'); }
 const initialSelection=populatePracticeChooser(defaultPracticeSelection()); reference=referenceById(initialSelection.referenceId); wire(); updateMetadataFields(); updateRefText(); renderPracticeGuidance(initialSelection); renderGuidedSession(); renderPracticeHistory(initialSelection.referenceId); renderPressureCalibration(); resize(); renderMetrics(emptyScore('Draw a glyph, then score it.'));
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Ductus service worker registration failed',err)));
-window.__ductus={ scoreAttempt, classifyPressureCalibration, savePressureCalibration, currentPressureCalibration, clearPressureCalibration, serializePracticeHistoryEntry, summarizePracticeHistory, loadPracticeHistory, savePracticeHistoryEntry, clearPracticeHistory, recentHistoryFor, resample, dtw, directionScore, pressureScore, pressureProfileFor, pressureExpectationFor, pressureWidthFor, rhythmScore, matchStrokes, diagnosticsFor, environmentSnapshot, settingsSnapshot, exportAttemptPayload, availableReferences, availableHands, defaultPracticeSelection, resolvePracticeSelection, referencesForGroup, practiceGuidanceFor, referenceById, mismatchMarkersFor, guidedSessionSequence, defaultGuidedSession, startGuidedSession, retryGuidedSessionStep, continueGuidedSession, applyReferenceMetadata, safeReference, sampleReference, get guidedSession(){return guidedSession;}, get attempt(){return attempt;}, get reference(){return reference;} };
+window.__ductus={ scoreAttempt, prepareAdoptionReview, referenceFromAdoptionReview, openAdoptionReview, confirmAdoptionReview, classifyPressureCalibration, savePressureCalibration, currentPressureCalibration, clearPressureCalibration, serializePracticeHistoryEntry, summarizePracticeHistory, loadPracticeHistory, savePracticeHistoryEntry, clearPracticeHistory, recentHistoryFor, resample, dtw, directionScore, pressureScore, pressureProfileFor, pressureExpectationFor, pressureWidthFor, rhythmScore, matchStrokes, diagnosticsFor, environmentSnapshot, settingsSnapshot, exportAttemptPayload, availableReferences, availableHands, defaultPracticeSelection, resolvePracticeSelection, referencesForGroup, practiceGuidanceFor, referenceById, mismatchMarkersFor, guidedSessionSequence, defaultGuidedSession, startGuidedSession, retryGuidedSessionStep, continueGuidedSession, applyReferenceMetadata, safeReference, sampleReference, get guidedSession(){return guidedSession;}, get attempt(){return attempt;}, get reference(){return reference;} };
 </script>
