@@ -37,6 +37,8 @@ assert.match(html, /value="sample-i"/);
 assert.match(html, /value="sample-u"/);
 assert.match(html, /value="sample-m"/);
 assert.match(html, /drawReferenceMarkers/);
+assert.match(html, /drawMismatchMarkers/);
+assert.match(html, /mismatchMarkersFor/);
 assert.match(html, /Pressure confidence/);
 assert.match(html, /id="pressureView"/);
 assert.match(html, /Show pressure/);
@@ -239,11 +241,22 @@ const offPathScore = core.scoreAttempt(offPathDownstroke, wanderingDownstroke);
 assert.ok(offPathScore.pressure.score > 90, 'pressure can be plausible when the path is wrong');
 assert.ok(offPathScore.form.score < 75, 'fixture must be clearly off path');
 assert.ok(offPathScore.feedback.includes('Pressure looks plausible, but the stroke path is off'), 'feedback should explain high pressure score on low form');
+const offPathMarkers = core.mismatchMarkersFor(offPathDownstroke, wanderingDownstroke, offPathScore);
+assert.ok(offPathMarkers.some(marker => marker.type === 'form-mismatch' && marker.strokeIndex === 0 && marker.severity === 'high'), 'off-path attempt should get a form mismatch marker');
+assert.ok(offPathScore.markers.some(marker => marker.type === 'form-mismatch'), 'score output should include markers for export/rendering');
 
 const reversedStroke = [JSON.parse(JSON.stringify(reference.strokes[0]))];
 reversedStroke[0].points.reverse();
 const reversed = core.scoreAttempt({ ...reference, strokes: [reference.strokes[0]] }, reversedStroke);
 assert.ok(reversed.direction.score < 60, 'reversed stroke should primarily fail direction');
+assert.ok(core.mismatchMarkersFor({ ...reference, strokes: [reference.strokes[0]] }, reversedStroke, reversed).some(marker => marker.type === 'direction-reversed'), 'reversed attempt should get a direction marker');
+
+const tooHeavyHairline = [{ index: 0, points: core.referenceById('warmup-hairline').strokes[0].points.map((p, i) => ({ ...p, p: [0.72, 0.84, 0.76][i] ?? 0.78 })) }];
+const heavyHairlineScore = core.scoreAttempt(core.referenceById('warmup-hairline'), tooHeavyHairline);
+const pressureMarkers = core.mismatchMarkersFor(core.referenceById('warmup-hairline'), tooHeavyHairline, heavyHairlineScore);
+assert.ok(pressureMarkers.some(marker => marker.type === 'pressure-too-heavy'), 'heavy hairline should get a pressure marker');
+const flatHairline = [{ index: 0, points: core.referenceById('warmup-hairline').strokes[0].points.map(p => ({ ...p, p: 0.5 })) }];
+assert.ok(!core.mismatchMarkersFor(core.referenceById('warmup-hairline'), flatHairline, core.scoreAttempt(core.referenceById('warmup-hairline'), flatHairline)).some(marker => marker.type.startsWith('pressure-')), 'flat pressure data should suppress pressure markers');
 
 const swapped = core.scoreAttempt(reference, [same[1], same[0]]);
 assert.ok(swapped.order.score < 60, 'swapped stroke order should fail order');
@@ -267,6 +280,7 @@ const oneStrokeScore = core.scoreAttempt(reference, [same[0]]);
 assert.equal(oneStrokeScore.direction.confidence, 'partial — stroke count mismatch');
 assert.equal(oneStrokeScore.pressure.confidence, 'real · partial');
 assert.ok(oneStrokeScore.feedback.includes('Reference expects 2 strokes'));
+assert.ok(oneStrokeScore.markers.some(marker => marker.type === 'stroke-count' && marker.message.includes('Reference expects 2 strokes')), 'stroke-count mismatch should be a marker with plain text');
 
 const accidentalTap = { index: 0, points: [{ x: 260, y: 508, p: 0.1, t: 1 }] };
 const tapThenStroke = core.diagnosticsFor(reference, [accidentalTap, same[0]]);
