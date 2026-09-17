@@ -90,6 +90,7 @@ Done in first thin slice:
   - Glyph
 - Practice guidance panel explains the purpose and cues for each starter glyph.
 - Guided 10-minute Kurrent stem session walks through hairline, downstroke, compound curve, `i`, `u`, `n`, and `m` with progress, current/next step, retry, and continue controls.
+- Visual mismatch markers identify form/path mismatches, reversed direction, usable pressure problems, and stroke-count mismatches after scoring.
 - Old reference IDs and `referenceById(...)` compatibility preserved.
 - Attempt exports include:
   - `selectedHandId`
@@ -216,8 +217,8 @@ Goal: turn numbers into practice feedback.
 
 Planned work:
 
-- Add per-stroke mismatch markers
-- Highlight reversed strokes
+- Add per-stroke mismatch markers ✓ first visual markers exist for form/path, reversed direction, usable pressure problems, and stroke-count mismatches
+- Highlight reversed strokes ✓ first marker exists
 - Show the closest reference stroke for each attempt stroke
 - Split pressure feedback from form feedback visually
 - Add short plain-language feedback for common failure cases ✓ first pressure/count-mismatch hints exist

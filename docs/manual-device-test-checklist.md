@@ -60,6 +60,7 @@ Expected result:
 - Drawing works with pen or mouse.
 - The chooser exposes one hand (`Kurrent Basic`), two groups (`Warm-ups`, `Lowercase stems`), warm-ups plus Kurrent `i`, `u`, `n`, and `m`, and keeps all existing built-in reference IDs available.
 - `Start session` walks through the seven-step Kurrent stem sequence with progress, current step, next step, retry, and continue controls.
+- After scoring a flawed attempt, colored mismatch markers appear for actionable form/path, direction, usable pressure, or stroke-count problems.
 - The `What to practice` guidance changes with the selected glyph and gives concrete pressure/order cues.
 - Finger input is ignored.
 - Scoring does not crash.
