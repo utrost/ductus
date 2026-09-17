@@ -108,6 +108,12 @@
         <div class="row" style="margin-top:8px"><button id="loadRef" class="ghost" aria-label="Load reference JSON from text area">Load reference</button><button id="saveRef" class="ghost" aria-label="Download current reference JSON">Save ref</button></div>
       </details>
     </section>
+    <section id="pressureCalibration" class="card small" aria-label="Pressure calibration check">
+      <div class="session-head"><b>Pressure calibration</b><button id="startCalibration" class="ghost" aria-label="Start pressure calibration">Start check</button></div>
+      <div class="tag">Draw light, heavy, and slow curve samples. Save each sample after drawing it.</div>
+      <div class="row"><button id="saveCalibrationLight" class="ghost" aria-label="Save light pressure calibration sample">Save light</button><button id="saveCalibrationHeavy" class="ghost" aria-label="Save heavy pressure calibration sample">Save heavy</button><button id="saveCalibrationCurve" class="ghost" aria-label="Save curve pressure calibration sample">Save curve</button></div>
+      <div id="calibrationResult">Pressure calibration not run yet.</div>
+    </section>
     <section id="guidedSession" class="card small session-panel" aria-label="Guided Kurrent practice session">
       <div class="session-head"><b>10-minute Kurrent session</b><span id="sessionProgress" class="session-progress">Not started</span></div>
       <div id="sessionCurrent" class="session-title">Start with hairline → downstroke → compound curve → i → u → n → m.</div>
@@ -160,6 +166,8 @@ let lastMarkers = [];
 const N = 64;
 const MIN_STROKE_POINTS = 3;
 const PRACTICE_HISTORY_KEY = 'ductus.practiceHistory.v1';
+const PRESSURE_CALIBRATION_KEY = 'ductus.pressureCalibration.v1';
+let pressureCalibrationSamples = { light:[], heavy:[], curve:[] };
 
 function stemStroke(index, x, endX=x+150) {
   return { index, hint:'Light entry, weighted stem, then release into the hairline.', points:[{x,y:700,p:.22,t:0},{x:x+60,y:430,p:.34,t:.45},{x:endX,y:700,p:.84,t:1}] };
@@ -252,6 +260,32 @@ function trimPressurePoints(points){ const drop=points.length>12?Math.max(1,Math
 function quantile(xs,q){ if(!xs.length) return 0; const s=[...xs].sort((a,b)=>a-b), idx=(s.length-1)*q, lo=Math.floor(idx), hi=Math.ceil(idx); return lo===hi?s[lo]:s[lo]*(hi-idx)+s[hi]*(idx-lo); }
 function pressureProfileFor(strokes){ const pts=validStrokes(strokes).flatMap(s=>s.points||[]); const ps=pts.map(p=>Number.isFinite(Number(p.p))?Number(p.p):.5); const trimmed=validStrokes(strokes).flatMap(s=>trimPressurePoints(s.points||[])).map(p=>Number.isFinite(Number(p.p))?Number(p.p):.5); const src=trimmed.length?trimmed:ps; const rawMin=ps.length?Math.min(...ps):0, rawMax=ps.length?Math.max(...ps):0; const trimmedMin=src.length?Math.min(...src):0, trimmedMax=src.length?Math.max(...src):0; const range=trimmedMax-trimmedMin; const variationLabel=!ps.length?'missing':range<.05?'flat':range<.18?'narrow':range<.45?'useful':'broad'; const med=median(src); const levelLabel=!ps.length?'missing':med<.18?'low':med<.55?'medium':'high'; return { rawMin, rawMax, trimmedMin, trimmedMax, median:med, p90:quantile(src,.9), p95:quantile(src,.95), range, rangeLabel:variationLabel, variationLabel, levelLabel }; }
 function pressureStatusFor(strokes){ const profile=pressureProfileFor(strokes); if(profile.variationLabel==='missing') return 'missing'; return profile.variationLabel==='flat' ? 'flat' : 'real'; }
+function pressureValues(strokes){ return validStrokes(strokes).flatMap(s=>s.points||[]).map(p=>Number(p.p)).filter(Number.isFinite); }
+function medianPressure(strokes){ const values=pressureValues(strokes); return values.length ? median(values) : 0; }
+function classifyPressureCalibration(samples={}){
+  const light=samples.light||[], heavy=samples.heavy||[], curve=samples.curve||[];
+  const all=[...pressureValues(light),...pressureValues(heavy),...pressureValues(curve)];
+  if(!all.length) return { availability:'missing', feedbackMode:'disabled', lightMedian:0, heavyMedian:0, curveRange:0, range:0, summary:'Pressure calibration missing: pressure feedback should be disabled until this browser/device provides samples.' };
+  const lightMedian=medianPressure(light), heavyMedian=medianPressure(heavy);
+  const curveValues=pressureValues(curve);
+  const curveRange=curveValues.length ? Math.max(...curveValues)-Math.min(...curveValues) : 0;
+  const range=Math.max(...all)-Math.min(...all);
+  const separation=heavyMedian-lightMedian;
+  let availability='useful', feedbackMode='full';
+  if(range < .05 || separation < .05){ availability='flat'; feedbackMode='disabled'; }
+  else if(range < .22 || separation < .16){ availability='narrow'; feedbackMode='reduced'; }
+  const summary=availability==='flat'
+    ? 'Pressure calibration looks flat: disable pressure claims and focus on form/order/direction.'
+    : availability==='narrow'
+      ? 'Pressure calibration is narrow: pressure feedback should be reduced and treated as tentative.'
+      : 'Pressure calibration looks useful: pressure feedback can be full for this device/browser.';
+  return { availability, feedbackMode, lightMedian, heavyMedian, curveRange, range, summary };
+}
+function calibrationStorage(){ try { return window.localStorage || null; } catch { return null; } }
+function savePressureCalibration(result){ const store=calibrationStorage(); const saved={...result, savedAt:new Date().toISOString()}; if(store) store.setItem(PRESSURE_CALIBRATION_KEY, JSON.stringify(saved)); renderPressureCalibration(saved); return saved; }
+function currentPressureCalibration(){ const store=calibrationStorage(); if(!store) return { availability:'unverified', feedbackMode:'unverified', summary:'Pressure calibration not run yet.' }; try{ return JSON.parse(store.getItem(PRESSURE_CALIBRATION_KEY)) || { availability:'unverified', feedbackMode:'unverified', summary:'Pressure calibration not run yet.' }; } catch { return { availability:'unverified', feedbackMode:'unverified', summary:'Pressure calibration not run yet.' }; } }
+function clearPressureCalibration(){ const store=calibrationStorage(); if(store) store.removeItem(PRESSURE_CALIBRATION_KEY); pressureCalibrationSamples={light:[],heavy:[],curve:[]}; renderPressureCalibration(currentPressureCalibration()); }
+
 function normalizePressureValues(points){ const vals=points.map(p=>Number.isFinite(Number(p.p))?Number(p.p):.5); if(!vals.length) return []; const lo=quantile(vals,.05), hi=quantile(vals,.95), span=hi-lo; if(span<.03) return vals.map(()=>.5); return vals.map(v=>clamp((v-lo)/span,0,1)); }
 function pressureScore(ref,got){ const r=trimPressurePoints(ref), g=trimPressurePoints(got); const shape=clamp((pearson(normalizePressureValues(r), normalizePressureValues(g))+1)*50,0,100); const rawShape=clamp((pearson(r.map(p=>p.p??.5), g.map(p=>p.p??.5))+1)*50,0,100); return Math.max(shape, rawShape*.9); }
 function rhythmScore(raw){ if(!raw || raw.length<3) return 100; const speeds=[]; for(let i=1;i<raw.length;i++){ const dt=Math.max(1,(raw[i].t||i)-(raw[i-1].t||i-1)); speeds.push(distance(raw[i-1],raw[i])/dt); } const mean=speeds.reduce((a,b)=>a+b,0)/speeds.length || 1; const variance=speeds.reduce((s,v)=>s+(v-mean)**2,0)/speeds.length; return clamp(100 - Math.sqrt(variance)/(mean||1)*32,0,100); }
@@ -283,7 +317,9 @@ function scoreAttempt(ref, strokes){
   const prefix=(ignored?`Ignored ${ignored} tiny stroke${ignored===1?'':'s'}. `:'')+(countMismatch?`Reference expects ${refStrokes.length} strokes; attempt has ${gotStrokes.length}. `:'');
   const feedback=prefix+feedbackFor({form:avg(formVals),order,direction:avg(dirVals),pressure:pressureOverall,rhythm:avg(rhythmVals)}, ref, gotStrokes, pairs, pressureExpectation);
   const directionConfidence=countMismatch?'partial — stroke count mismatch':'';
-  const pressureConfidence=diagnostics.pressureStatus+(countMismatch?' · partial':'');
+  const calibration=currentPressureCalibration();
+  const calibrationConfidence=calibration.feedbackMode&&calibration.feedbackMode!=='unverified'?` · calibration ${calibration.feedbackMode}`:'';
+  const pressureConfidence=diagnostics.pressureStatus+(countMismatch?' · partial':'')+calibrationConfidence;
   const base={ form:metric(avg(formVals),'Path placement'), order:metric(order,'Stroke order',countMismatch?'count mismatch':'matched'), direction:metric(avg(dirVals),'Stroke direction',directionConfidence), pressure:metric(pressureOverall,'Pressure curve',pressureConfidence), rhythm:metric(avg(rhythmVals),'Writing rhythm',diagnostics.rhythmConfidence), pairs, feedback };
   const markers=mismatchMarkersFor(ref, strokes, base);
   return {...base, markers};
@@ -343,7 +379,8 @@ function settingsSnapshot(ref=currentReferenceWithMetadata()){
     hasReferenceNotes: Boolean(ref.notes),
     validStrokeMinPoints: MIN_STROKE_POINTS,
     resamplePoints: N,
-    guidedSession: guidedSessionExportState()
+    guidedSession: guidedSessionExportState(),
+    pressureCalibration: currentPressureCalibration()
   };
 }
 function exportAttemptPayload(ref=currentReferenceWithMetadata(), strokes=attempt){
@@ -386,6 +423,12 @@ function renderPracticeHistory(referenceId=selectionReferenceId()){
   else entries.forEach(entry=>{ const item=document.createElement('div'); item.className='history-item'; const name=document.createElement('b'); name.textContent=`${entry.glyph || entry.referenceId}`; const when=document.createElement('span'); when.textContent=new Date(entry.scoredAt).toLocaleString(); const scores=document.createElement('div'); scores.className='history-scores'; scores.textContent=formatHistoryScore(entry); item.append(name,when,scores); list.appendChild(item); });
   summaryBox.textContent=summarizePracticeHistory(loadPracticeHistory()).text;
 }
+function renderPressureCalibration(result=currentPressureCalibration()){
+  const box=document.getElementById('calibrationResult');
+  if(!box) return;
+  box.textContent=`${result.summary || 'Pressure calibration not run yet.'} Mode: ${result.feedbackMode || 'unverified'}.`;
+}
+function saveCalibrationSample(kind){ pressureCalibrationSamples[kind]=validStrokes(attempt).map(s=>({index:s.index,points:s.points.map(p=>({...p}))})); const result=classifyPressureCalibration(pressureCalibrationSamples); if(['light','heavy','curve'].every(k=>pressureCalibrationSamples[k].length)) savePressureCalibration(result); else renderPressureCalibration(result); toast(`Saved ${kind} pressure sample`); }
 function scoreIntoView(){ const box=document.getElementById('metrics'); if(!box) return; box.style.scrollMarginBlockStart='10px'; requestAnimationFrame(()=>box.scrollIntoView&&box.scrollIntoView({block:'start',behavior:'smooth'})); }
 function renderMetrics(result){ lastMarkers=result.markers||[]; render(); const box=document.getElementById('metrics'); box.innerHTML=''; for(const k of ['form','order','direction','pressure','rhythm']){ const m=result[k]; const row=document.createElement('div'); row.className='metric'; const lab=document.createElement('div'); lab.textContent=m.label; const bar=document.createElement('div'); bar.className='bar'; const fill=document.createElement('div'); fill.className='fill '+(m.score>=80?'ok':m.score>=55?'mid':''); fill.style.width=m.score+'%'; bar.appendChild(fill); const val=document.createElement('b'); val.textContent=m.score; row.append(lab,bar,val); if(m.confidence){ const conf=document.createElement('div'); conf.className='confidence'; conf.textContent=k==='pressure'?'Pressure confidence: '+m.confidence:(k==='rhythm'?m.confidence:'Confidence: '+m.confidence); row.appendChild(conf); } box.appendChild(row); } document.getElementById('feedback').textContent=result.feedback; }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.className='show'; clearTimeout(toast._timer); toast._timer=setTimeout(()=>t.className='',1800); }
@@ -449,6 +492,7 @@ function chooseReference(selection){
   renderMetrics(emptyScore('Draw a glyph, then score it.'));
   renderGuidedSession();
   renderPracticeHistory(sel.referenceId);
+  renderPressureCalibration();
   toast('Reference changed');
 }
 function wire(){
@@ -462,6 +506,10 @@ function wire(){
   document.getElementById('retryStep').onclick=()=>retryGuidedSessionStep();
   document.getElementById('continueStep').onclick=()=>continueGuidedSession();
   document.getElementById('clearHistory').onclick=()=>{ clearPracticeHistory(); toast('History cleared'); };
+  document.getElementById('startCalibration').onclick=()=>{ pressureCalibrationSamples={ light:[], heavy:[], curve:[] }; clearPressureCalibration(); toast('Pressure calibration started'); };
+  document.getElementById('saveCalibrationLight').onclick=()=>saveCalibrationSample('light');
+  document.getElementById('saveCalibrationHeavy').onclick=()=>saveCalibrationSample('heavy');
+  document.getElementById('saveCalibrationCurve').onclick=()=>saveCalibrationSample('curve');
   document.getElementById('loadRef').onclick=loadRefFromText;
   document.getElementById('saveRef').onclick=()=>{ const ref=currentReferenceWithMetadata(); download(`${ref.script}-${ref.glyph}.json`,'application/json',JSON.stringify(ref,null,2)); };
   document.getElementById('saveAttempt').onclick=()=>{ const ref=currentReferenceWithMetadata(); download(`${ref.script}-${ref.glyph}-attempt.txt`,'text/plain',JSON.stringify(exportAttemptPayload(ref,attempt),null,2)); };
@@ -481,7 +529,7 @@ function wire(){
   ['metaHand','metaTool','metaNotes'].forEach(id=>document.getElementById(id).addEventListener('input',updateRefText));
 }
 function setMode(next){ mode=next; document.getElementById('practiceTab').classList.toggle('active',mode==='practice'); document.getElementById('authorTab').classList.toggle('active',mode==='author'); toast(mode==='author'?'Author mode':'Practice mode'); }
-const initialSelection=populatePracticeChooser(defaultPracticeSelection()); reference=referenceById(initialSelection.referenceId); wire(); updateMetadataFields(); updateRefText(); renderPracticeGuidance(initialSelection); renderGuidedSession(); renderPracticeHistory(initialSelection.referenceId); resize(); renderMetrics(emptyScore('Draw a glyph, then score it.'));
+const initialSelection=populatePracticeChooser(defaultPracticeSelection()); reference=referenceById(initialSelection.referenceId); wire(); updateMetadataFields(); updateRefText(); renderPracticeGuidance(initialSelection); renderGuidedSession(); renderPracticeHistory(initialSelection.referenceId); renderPressureCalibration(); resize(); renderMetrics(emptyScore('Draw a glyph, then score it.'));
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Ductus service worker registration failed',err)));
-window.__ductus={ scoreAttempt, serializePracticeHistoryEntry, summarizePracticeHistory, loadPracticeHistory, savePracticeHistoryEntry, clearPracticeHistory, recentHistoryFor, resample, dtw, directionScore, pressureScore, pressureProfileFor, pressureExpectationFor, pressureWidthFor, rhythmScore, matchStrokes, diagnosticsFor, environmentSnapshot, settingsSnapshot, exportAttemptPayload, availableReferences, availableHands, defaultPracticeSelection, resolvePracticeSelection, referencesForGroup, practiceGuidanceFor, referenceById, mismatchMarkersFor, guidedSessionSequence, defaultGuidedSession, startGuidedSession, retryGuidedSessionStep, continueGuidedSession, applyReferenceMetadata, safeReference, sampleReference, get guidedSession(){return guidedSession;}, get attempt(){return attempt;}, get reference(){return reference;} };
+window.__ductus={ scoreAttempt, classifyPressureCalibration, savePressureCalibration, currentPressureCalibration, clearPressureCalibration, serializePracticeHistoryEntry, summarizePracticeHistory, loadPracticeHistory, savePracticeHistoryEntry, clearPracticeHistory, recentHistoryFor, resample, dtw, directionScore, pressureScore, pressureProfileFor, pressureExpectationFor, pressureWidthFor, rhythmScore, matchStrokes, diagnosticsFor, environmentSnapshot, settingsSnapshot, exportAttemptPayload, availableReferences, availableHands, defaultPracticeSelection, resolvePracticeSelection, referencesForGroup, practiceGuidanceFor, referenceById, mismatchMarkersFor, guidedSessionSequence, defaultGuidedSession, startGuidedSession, retryGuidedSessionStep, continueGuidedSession, applyReferenceMetadata, safeReference, sampleReference, get guidedSession(){return guidedSession;}, get attempt(){return attempt;}, get reference(){return reference;} };
 </script>

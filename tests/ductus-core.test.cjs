@@ -43,6 +43,12 @@ assert.match(html, /Pressure confidence/);
 assert.match(html, /id="pressureView"/);
 assert.match(html, /Show pressure/);
 assert.match(html, /Pressure view draws reference and attempt thickness from pressure data/);
+assert.match(html, /id="pressureCalibration"/);
+assert.match(html, /id="startCalibration"/);
+assert.match(html, /id="saveCalibrationLight"/);
+assert.match(html, /id="saveCalibrationHeavy"/);
+assert.match(html, /id="saveCalibrationCurve"/);
+assert.match(html, /id="calibrationResult"/);
 assert.match(html, /id="guidedSession"/);
 assert.match(html, /id="startSession"/);
 assert.match(html, /id="sessionProgress"/);
@@ -264,6 +270,42 @@ assert.equal(exportPayload.strokes.length, 2);
 const compressedPressure = [{ index: 0, points: reference.strokes[0].points.map(p => ({ ...p, p: 0.1 + p.p * 0.35 })) }];
 const compressedScore = core.scoreAttempt({ ...reference, strokes: [reference.strokes[0]] }, compressedPressure);
 assert.ok(compressedScore.pressure.score > 90, 'same pressure shape in a compressed device range should still score well');
+
+const missingCalibration = core.classifyPressureCalibration({ light: [], heavy: [], curve: [] });
+assert.equal(missingCalibration.availability, 'missing');
+assert.equal(missingCalibration.feedbackMode, 'disabled');
+assert.ok(missingCalibration.summary.includes('missing'));
+const flatCalibration = core.classifyPressureCalibration({
+  light: [{ index: 0, points: [{ p: 0.5 }, { p: 0.5 }, { p: 0.5 }] }],
+  heavy: [{ index: 0, points: [{ p: 0.5 }, { p: 0.5 }, { p: 0.5 }] }],
+  curve: [{ index: 0, points: [{ p: 0.5 }, { p: 0.5 }, { p: 0.5 }] }]
+});
+assert.equal(flatCalibration.availability, 'flat');
+assert.equal(flatCalibration.feedbackMode, 'disabled');
+assert.ok(flatCalibration.summary.includes('flat'));
+const narrowCalibration = core.classifyPressureCalibration({
+  light: [{ index: 0, points: [{ p: 0.31 }, { p: 0.33 }, { p: 0.32 }] }],
+  heavy: [{ index: 0, points: [{ p: 0.43 }, { p: 0.45 }, { p: 0.44 }] }],
+  curve: [{ index: 0, points: [{ p: 0.31 }, { p: 0.39 }, { p: 0.44 }, { p: 0.34 }] }]
+});
+assert.equal(narrowCalibration.availability, 'narrow');
+assert.equal(narrowCalibration.feedbackMode, 'reduced');
+assert.ok(narrowCalibration.summary.includes('narrow'));
+const usefulCalibration = core.classifyPressureCalibration({
+  light: [{ index: 0, points: [{ p: 0.12 }, { p: 0.16 }, { p: 0.18 }] }],
+  heavy: [{ index: 0, points: [{ p: 0.72 }, { p: 0.82 }, { p: 0.86 }] }],
+  curve: [{ index: 0, points: [{ p: 0.18 }, { p: 0.58 }, { p: 0.84 }, { p: 0.22 }] }]
+});
+assert.equal(usefulCalibration.availability, 'useful');
+assert.equal(usefulCalibration.feedbackMode, 'full');
+assert.ok(usefulCalibration.summary.includes('useful'));
+assert.ok(usefulCalibration.heavyMedian > usefulCalibration.lightMedian);
+core.savePressureCalibration(usefulCalibration);
+assert.equal(core.currentPressureCalibration().feedbackMode, 'full');
+assert.equal(core.scoreAttempt(reference, same).pressure.confidence, 'real · calibration full');
+assert.equal(core.exportAttemptPayload(reference, same).settings.pressureCalibration.feedbackMode, 'full');
+core.clearPressureCalibration();
+assert.equal(core.currentPressureCalibration().feedbackMode, 'unverified');
 
 const offPathDownstroke = core.referenceById('warmup-downstroke');
 const wanderingDownstroke = [{ index: 0, points: offPathDownstroke.strokes[0].points.map((p, i) => ({ ...p, x: p.x + (i === 1 ? 260 : 0) })) }];
