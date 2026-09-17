@@ -25,6 +25,7 @@ Implemented now:
 - PWA manifest, service worker, and install icons
 - Mobile-responsive layout
 - Hand/group/glyph practice chooser with first hand: Kurrent Basic
+- Guided 10-minute Kurrent stem session: hairline, downstroke, compound curve, `i`, `u`, `n`, `m`
 - Practice guidance panel that explains what to notice for each starter glyph
 - Seven built-in references grouped as warm-ups and lowercase stems: hairline, downstroke, compound curve, plus Kurrent `i`, `u`, `n`, and `m` starter references
 - Stylus and mouse stroke capture
@@ -46,7 +47,7 @@ Implemented now:
 
 Known limits:
 
-- Built-in references are grouped into a first starter hand, but the content is still mostly calibration samples rather than a real hand/glyph curriculum.
+- The guided 10-minute Kurrent stem session uses the existing starter references and guidance; reference quality still needs real stylus exports before the hand can be treated as a trustworthy teacher.
 - Pressure behavior depends on browser, hardware, stylus, and grip; thresholds now use the first Android Firefox calibration batch but still need more devices.
 - The pressure view makes raw pressure visible, but the app still needs better per-stroke mismatch markers.
 - Authoring a good reference still needs judgement and a review step before adoption.
