@@ -60,6 +60,11 @@
   .guidance p { margin:0; color:var(--muted); line-height:1.45; }
   .guidance ul { margin:8px 0 0; padding-left:18px; color:var(--ink); }
   .guidance li { margin:4px 0; }
+  .session-panel { display:grid; gap:8px; }
+  .session-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .session-progress { color:var(--accent); font-weight:900; font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+  .session-title { color:var(--ink); font-weight:900; }
+  .session-next { color:var(--muted); }
   @media (max-width: 900px) { #app { grid-template-columns:1fr; grid-template-rows:minmax(0,1fr) auto; } #side { max-height:46vh; border-left:0; border-top:1px solid rgba(255,255,255,.08); } }
   @media (max-width: 720px) { html, body { height:100dvh; } #app { height:100dvh; } #side { padding:10px; padding-bottom:calc(12px + env(safe-area-inset-bottom) + 76px); gap:8px; max-height:50vh; scroll-padding-bottom:calc(12px + env(safe-area-inset-bottom) + 76px); } h1 { font-size:19px; } button,label.file,select { min-height:44px; padding:9px 10px; } .card { padding:10px; border-radius:12px; } .metric { grid-template-columns:72px 1fr 36px; margin:6px 0; } #metrics { scroll-margin-block-start:10px; } #referencePanel textarea { min-height:72px; max-height:140px; } }
 </style>
@@ -99,6 +104,13 @@
         <div class="row" style="margin-top:8px"><button id="loadRef" class="ghost" aria-label="Load reference JSON from text area">Load reference</button><button id="saveRef" class="ghost" aria-label="Download current reference JSON">Save ref</button></div>
       </details>
     </section>
+    <section id="guidedSession" class="card small session-panel" aria-label="Guided Kurrent practice session">
+      <div class="session-head"><b>10-minute Kurrent session</b><span id="sessionProgress" class="session-progress">Not started</span></div>
+      <div id="sessionCurrent" class="session-title">Start with hairline → downstroke → compound curve → i → u → n → m.</div>
+      <div id="sessionNext" class="session-next">Each step keeps the normal guidance and scoring.</div>
+      <div id="sessionAction">Score an attempt, then retry or continue.</div>
+      <div class="row"><button id="startSession" class="primary" aria-label="Start guided Kurrent session">Start session</button><button id="retryStep" class="ghost" aria-label="Retry current guided session step">Retry step</button><button id="continueStep" class="ghost" aria-label="Continue to next guided session step">Continue</button></div>
+    </section>
     <section class="card">
       <div class="row"><button id="score" class="primary" aria-label="Score the current attempt">Score</button><button id="undo" class="ghost" aria-label="Undo last stroke">Undo</button><button id="clear" class="ghost" aria-label="Clear attempt strokes">Clear</button><button id="saveAttempt" class="ghost" aria-label="Download attempt text file">Save attempt</button></div>
       <div id="metrics" style="margin-top:10px"></div>
@@ -134,6 +146,7 @@ let attempt = [];
 let reference = sampleReference();
 let lastPointerType = 'none';
 let showPressure = false;
+let guidedSession = { active:false, index:0, lastScore:null };
 const N = 64;
 const MIN_STROKE_POINTS = 3;
 
@@ -174,10 +187,15 @@ function builtInHands(){ return [
     { id:'lowercase-stems', label:'Lowercase stems', referenceIds:['sample-i','sample-u','sample-n','sample-m'] }
   ] }
 ]; }
-function availableReferences(){ return [{id:'sample-i',label:'Kurrent i · starter'},{id:'sample-u',label:'Kurrent u · starter'},{id:'sample-n',label:'Kurrent n · sample'},{id:'sample-m',label:'Kurrent m · starter'},{id:'warmup-hairline',label:'Warm-up · hairline'},{id:'warmup-downstroke',label:'Warm-up · downstroke'},{id:'warmup-compound',label:'Warm-up · compound curve'}]; }
+function availableReferences(){ return [{id:'sample-i',label:'Kurrent i · starter'},{id:'sample-u',label:'Kurrent u · starter'},{id:'sample-n',label:'Kurrent n · sample'},{id:'sample-m',label:'Kurrent m · starter'},{id:'warmup-hairline',label:'Warm-up · Hairline'},{id:'warmup-downstroke',label:'Warm-up · Downstroke'},{id:'warmup-compound',label:'Warm-up · Compound curve'}]; }
 function availableHands(){ return builtInHands().map(hand=>({...hand, groups:hand.groups.map(group=>({...group, references:group.referenceIds.map(id=>availableReferences().find(ref=>ref.id===id)).filter(Boolean)}))})); }
 function defaultPracticeSelection(){ const hand=availableHands()[0]; const group=hand.groups[0]; return { handId:hand.id, groupId:group.id, referenceId:group.referenceIds[0] }; }
 function resolvePracticeSelection(handId, groupId, referenceId){ const fallback=defaultPracticeSelection(); const hand=availableHands().find(h=>h.id===handId) || availableHands()[0]; const group=hand.groups.find(g=>g.id===groupId) || hand.groups[0]; const wanted=group.referenceIds.includes(referenceId) ? referenceId : group.referenceIds[0]; return { handId:hand.id, groupId:group.id, referenceId:wanted || fallback.referenceId }; }
+function selectionForReference(referenceId){ for(const hand of availableHands()) for(const group of hand.groups) if(group.referenceIds.includes(referenceId)) return {handId:hand.id, groupId:group.id, referenceId}; return defaultPracticeSelection(); }
+function labelForReference(referenceId){ return (availableReferences().find(ref=>ref.id===referenceId)||{label:referenceId}).label; }
+function guidedSessionSequence(){ return ['warmup-hairline','warmup-downstroke','warmup-compound','sample-i','sample-u','sample-n','sample-m'].map((referenceId,index)=>({...selectionForReference(referenceId), referenceId, label:labelForReference(referenceId), index})); }
+function guidedSessionState(index=guidedSession.index){ const sequence=guidedSessionSequence(); const safeIndex=clamp(index,0,sequence.length-1); const currentStep=sequence[safeIndex]; const nextStep=sequence[safeIndex+1] || null; return { active:guidedSession.active, handId:'kurrent-basic', index:safeIndex, total:sequence.length, currentStep, nextStep, progressLabel:`Step ${safeIndex+1} of ${sequence.length}`, complete:safeIndex>=sequence.length-1 }; }
+function defaultGuidedSession(){ return guidedSessionState(0); }
 function referencesForGroup(handId, groupId){ const sel=resolvePracticeSelection(handId, groupId, ''); const hand=availableHands().find(h=>h.id===sel.handId); const group=hand.groups.find(g=>g.id===sel.groupId); return group.referenceIds.map(id=>availableReferences().find(ref=>ref.id===id)).filter(Boolean); }
 function practiceGuidanceFor(handId, groupId, referenceId){
   const sel=resolvePracticeSelection(handId, groupId, referenceId);
@@ -283,7 +301,8 @@ function settingsSnapshot(ref=currentReferenceWithMetadata()){
     referenceTool: String(ref.tool || ''),
     hasReferenceNotes: Boolean(ref.notes),
     validStrokeMinPoints: MIN_STROKE_POINTS,
-    resamplePoints: N
+    resamplePoints: N,
+    guidedSession: guidedSessionExportState()
   };
 }
 function exportAttemptPayload(ref=currentReferenceWithMetadata(), strokes=attempt){
@@ -312,6 +331,24 @@ function renderPracticeGuidance(selection=defaultPracticeSelection()){
   guidance.cues.forEach(cue=>{ const li=document.createElement('li'); li.textContent=cue; cues.appendChild(li); });
   return guidance;
 }
+function guidedSessionExportState(){ const state=guidedSessionState(); return { active:state.active, index:state.index, total:state.total, progressLabel:state.progressLabel, currentReferenceId:state.currentStep.referenceId, nextReferenceId:state.nextStep?.referenceId || '', sequence:guidedSessionSequence().map(step=>step.referenceId), lastScore:guidedSession.lastScore }; }
+function renderGuidedSession(){
+  const state=guidedSessionState();
+  const progress=document.getElementById('sessionProgress');
+  const currentBox=document.getElementById('sessionCurrent');
+  const nextBox=document.getElementById('sessionNext');
+  const action=document.getElementById('sessionAction');
+  if(!progress || !currentBox || !nextBox || !action) return state;
+  progress.textContent=state.active ? state.progressLabel : 'Not started';
+  currentBox.textContent=state.active ? `Current: ${state.currentStep.label}` : 'Start with hairline → downstroke → compound curve → i → u → n → m.';
+  nextBox.textContent=state.active ? (state.nextStep ? `Next: ${state.nextStep.label}` : 'Final step. Save/export if this is useful evidence.') : 'Each step keeps the normal guidance and scoring.';
+  action.textContent=guidedSession.lastScore ? (state.nextStep ? 'Scored. Retry this step or continue to the next one.' : 'Scored final step. Retry, save the attempt, or start again.') : 'Score an attempt, then retry or continue.';
+  return state;
+}
+function startGuidedSession(){ guidedSession={active:true,index:0,lastScore:null}; const state=guidedSessionState(0); chooseReference(state.currentStep); renderGuidedSession(); toast('Guided session started'); return state; }
+function retryGuidedSessionStep(){ if(!guidedSession.active) return startGuidedSession(); guidedSession.lastScore=null; const state=guidedSessionState(); chooseReference(state.currentStep); renderGuidedSession(); toast('Retry current step'); return state; }
+function continueGuidedSession(){ if(!guidedSession.active) return startGuidedSession(); const sequence=guidedSessionSequence(); guidedSession.index=clamp(guidedSession.index+1,0,sequence.length-1); guidedSession.lastScore=null; const state=guidedSessionState(); chooseReference(state.currentStep); renderGuidedSession(); toast(state.nextStep?'Next session step':'Final session step'); return state; }
+function recordGuidedSessionScore(result){ if(!guidedSession.active) return; guidedSession.lastScore={ referenceId:guidedSessionState().currentStep.referenceId, scoredAt:new Date().toISOString(), form:result.form.score, order:result.order.score, direction:result.direction.score, pressure:result.pressure.score, rhythm:result.rhythm.score }; renderGuidedSession(); }
 function optionHtml(value,label){ return `<option value="${value}">${label}</option>`; }
 function populatePracticeChooser(selection=defaultPracticeSelection()){
   const hands=availableHands();
@@ -338,11 +375,12 @@ function chooseReference(selection){
   renderPracticeGuidance(sel);
   render();
   renderMetrics(emptyScore('Draw a glyph, then score it.'));
+  renderGuidedSession();
   toast('Reference changed');
 }
-function wire(){ document.getElementById('practiceTab').onclick=()=>setMode('practice'); document.getElementById('authorTab').onclick=()=>setMode('author'); document.getElementById('pressureView').onchange=e=>{ showPressure=!!e.target.checked; render(); toast(showPressure?'Pressure view on':'Pressure view off'); }; document.getElementById('handSelect').onchange=e=>chooseReference({handId:e.target.value,groupId:'',referenceId:''}); document.getElementById('groupSelect').onchange=e=>chooseReference({handId:document.getElementById('handSelect').value,groupId:e.target.value,referenceId:''}); document.getElementById('glyphSelect').onchange=e=>chooseReference({handId:document.getElementById('handSelect').value,groupId:document.getElementById('groupSelect').value,referenceId:e.target.value}); document.getElementById('loadRef').onclick=loadRefFromText; document.getElementById('saveRef').onclick=()=>{ const ref=currentReferenceWithMetadata(); download(`${ref.script}-${ref.glyph}.json`,'application/json',JSON.stringify(ref,null,2)); }; document.getElementById('saveAttempt').onclick=()=>{ const ref=currentReferenceWithMetadata(); download(`${ref.script}-${ref.glyph}-attempt.txt`,'text/plain',JSON.stringify(exportAttemptPayload(ref,attempt),null,2)); }; document.getElementById('clear').onclick=()=>{ attempt=[]; render(); toast('Cleared'); }; document.getElementById('undo').onclick=()=>{ attempt.pop(); render(); }; document.getElementById('score').onclick=()=>{ reference=currentReferenceWithMetadata(); updateRefText(); renderMetrics(scoreAttempt(reference,attempt)); scoreIntoView(); }; document.getElementById('adopt').onclick=()=>{ if(!attempt.length){ alert('Draw an attempt first.'); return; } reference={...currentReferenceWithMetadata(), strokes:validStrokes(attempt).map((s,i)=>({index:i,hint:'',points:s.points.map((p,j)=>({...p,t:s.points.length>1?j/(s.points.length-1):0}))}))}; attempt=[]; updateMetadataFields(); updateRefText(); render(); toast('Attempt adopted as reference'); }; document.getElementById('openRef').onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ document.getElementById('refText').value=fr.result; loadRefFromText(); }; fr.readAsText(f); }; ['metaHand','metaTool','metaNotes'].forEach(id=>document.getElementById(id).addEventListener('input',updateRefText)); }
+function wire(){ document.getElementById('practiceTab').onclick=()=>setMode('practice'); document.getElementById('authorTab').onclick=()=>setMode('author'); document.getElementById('pressureView').onchange=e=>{ showPressure=!!e.target.checked; render(); toast(showPressure?'Pressure view on':'Pressure view off'); }; document.getElementById('handSelect').onchange=e=>{ guidedSession.active=false; chooseReference({handId:e.target.value,groupId:'',referenceId:''}); }; document.getElementById('groupSelect').onchange=e=>{ guidedSession.active=false; chooseReference({handId:document.getElementById('handSelect').value,groupId:e.target.value,referenceId:''}); }; document.getElementById('glyphSelect').onchange=e=>{ guidedSession.active=false; chooseReference({handId:document.getElementById('handSelect').value,groupId:document.getElementById('groupSelect').value,referenceId:e.target.value}); }; document.getElementById('startSession').onclick=()=>startGuidedSession(); document.getElementById('retryStep').onclick=()=>retryGuidedSessionStep(); document.getElementById('continueStep').onclick=()=>continueGuidedSession(); document.getElementById('loadRef').onclick=loadRefFromText; document.getElementById('saveRef').onclick=()=>{ const ref=currentReferenceWithMetadata(); download(`${ref.script}-${ref.glyph}.json`,'application/json',JSON.stringify(ref,null,2)); }; document.getElementById('saveAttempt').onclick=()=>{ const ref=currentReferenceWithMetadata(); download(`${ref.script}-${ref.glyph}-attempt.txt`,'text/plain',JSON.stringify(exportAttemptPayload(ref,attempt),null,2)); }; document.getElementById('clear').onclick=()=>{ attempt=[]; render(); toast('Cleared'); }; document.getElementById('undo').onclick=()=>{ attempt.pop(); render(); }; document.getElementById('score').onclick=()=>{ reference=currentReferenceWithMetadata(); updateRefText(); const result=scoreAttempt(reference,attempt); renderMetrics(result); recordGuidedSessionScore(result); scoreIntoView(); }; document.getElementById('adopt').onclick=()=>{ if(!attempt.length){ alert('Draw an attempt first.'); return; } reference={...currentReferenceWithMetadata(), strokes:validStrokes(attempt).map((s,i)=>({index:i,hint:'',points:s.points.map((p,j)=>({...p,t:s.points.length>1?j/(s.points.length-1):0}))}))}; attempt=[]; updateMetadataFields(); updateRefText(); render(); toast('Attempt adopted as reference'); }; document.getElementById('openRef').onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ document.getElementById('refText').value=fr.result; loadRefFromText(); }; fr.readAsText(f); }; ['metaHand','metaTool','metaNotes'].forEach(id=>document.getElementById(id).addEventListener('input',updateRefText)); }
 function setMode(next){ mode=next; document.getElementById('practiceTab').classList.toggle('active',mode==='practice'); document.getElementById('authorTab').classList.toggle('active',mode==='author'); toast(mode==='author'?'Author mode':'Practice mode'); }
-const initialSelection=populatePracticeChooser(defaultPracticeSelection()); reference=referenceById(initialSelection.referenceId); wire(); updateMetadataFields(); updateRefText(); renderPracticeGuidance(initialSelection); resize(); renderMetrics(emptyScore('Draw a glyph, then score it.'));
+const initialSelection=populatePracticeChooser(defaultPracticeSelection()); reference=referenceById(initialSelection.referenceId); wire(); updateMetadataFields(); updateRefText(); renderPracticeGuidance(initialSelection); renderGuidedSession(); resize(); renderMetrics(emptyScore('Draw a glyph, then score it.'));
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Ductus service worker registration failed',err)));
-window.__ductus={ scoreAttempt, resample, dtw, directionScore, pressureScore, pressureProfileFor, pressureExpectationFor, pressureWidthFor, rhythmScore, matchStrokes, diagnosticsFor, environmentSnapshot, settingsSnapshot, exportAttemptPayload, availableReferences, availableHands, defaultPracticeSelection, resolvePracticeSelection, referencesForGroup, practiceGuidanceFor, referenceById, applyReferenceMetadata, safeReference, sampleReference, get attempt(){return attempt;}, get reference(){return reference;} };
+window.__ductus={ scoreAttempt, resample, dtw, directionScore, pressureScore, pressureProfileFor, pressureExpectationFor, pressureWidthFor, rhythmScore, matchStrokes, diagnosticsFor, environmentSnapshot, settingsSnapshot, exportAttemptPayload, availableReferences, availableHands, defaultPracticeSelection, resolvePracticeSelection, referencesForGroup, practiceGuidanceFor, referenceById, guidedSessionSequence, defaultGuidedSession, startGuidedSession, retryGuidedSessionStep, continueGuidedSession, applyReferenceMetadata, safeReference, sampleReference, get guidedSession(){return guidedSession;}, get attempt(){return attempt;}, get reference(){return reference;} };
 </script>

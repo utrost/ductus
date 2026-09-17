@@ -89,11 +89,13 @@ Done in first thin slice:
   - Group
   - Glyph
 - Practice guidance panel explains the purpose and cues for each starter glyph.
+- Guided 10-minute Kurrent stem session walks through hairline, downstroke, compound curve, `i`, `u`, `n`, and `m` with progress, current/next step, retry, and continue controls.
 - Old reference IDs and `referenceById(...)` compatibility preserved.
 - Attempt exports include:
   - `selectedHandId`
   - `selectedGroupId`
   - `selectedReferenceId`
+  - `guidedSession` state when a guided session is active
 - Regression coverage for hands, groups, default selection, grouped references, export settings, and old flat reference compatibility.
 
 Still planned for this phase:
@@ -133,6 +135,8 @@ Exit criterion:
 ## Phase 2: Kurrent starter hand
 
 Goal: create enough reference content that Ductus can support a short real practice session.
+
+Status: first guided stem session implemented with starter references; remaining work is reference/content quality, joins, and validation from real exported attempts.
 
 Planned glyph path:
 

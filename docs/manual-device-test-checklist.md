@@ -45,21 +45,21 @@ Nice to have later:
 
 1. Open Ductus.
 2. Confirm the hand/group/glyph chooser opens at `Kurrent Basic → Warm-ups → Hairline`.
-3. Confirm `Show pressure` is visible and the `What to practice` panel describes a light, even upstroke.
-4. Switch to `Warm-ups → Downstroke` and confirm the guidance changes to firm pressure / release near the baseline.
-5. Switch to `Lowercase stems → Kurrent i · starter`, then step through `u`, `n`, and `m`; draw at least one attempt for each with the stylus.
-6. Enable `Show pressure` and confirm the visible stroke thickness changes with pressure.
-7. Click `Score`.
-8. Confirm the five bars update and the score block is scrolled into view on mobile.
-9. Click `Save attempt`.
-10. Reload the page.
-11. Confirm the app still opens while online.
-12. If installed as a PWA, turn network off and open it again.
+3. Click `Start session` and confirm the guided session shows `Step 1 of 7`, current hairline, and the next downstroke step.
+4. Confirm `Show pressure` is visible and the `What to practice` panel describes a light, even upstroke.
+5. Draw and score the hairline, then confirm the guided session offers retry/continue.
+6. Click `Continue` and confirm the chooser/guidance moves to downstroke; repeat through compound curve, `i`, `u`, `n`, and `m`.
+7. Enable `Show pressure` and confirm the visible stroke thickness changes with pressure.
+8. Click `Save attempt` on at least one guided-session step.
+9. Reload the page.
+10. Confirm the app still opens while online.
+11. If installed as a PWA, turn network off and open it again.
 
 Expected result:
 
 - Drawing works with pen or mouse.
 - The chooser exposes one hand (`Kurrent Basic`), two groups (`Warm-ups`, `Lowercase stems`), warm-ups plus Kurrent `i`, `u`, `n`, and `m`, and keeps all existing built-in reference IDs available.
+- `Start session` walks through the seven-step Kurrent stem sequence with progress, current step, next step, retry, and continue controls.
 - The `What to practice` guidance changes with the selected glyph and gives concrete pressure/order cues.
 - Finger input is ignored.
 - Scoring does not crash.
